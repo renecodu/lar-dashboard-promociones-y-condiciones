@@ -567,7 +567,7 @@ const collectiveProfiles = {
 
 const promotions = [
   { name: '1 mes de arriendo gratis x contrato 12 meses', icon: '🎉',
-    values: { SOHO: 'NO', PARK: 'SI', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'SI', COLLECTIVE: 'SI' } },
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'SI', COLLECTIVE: 'SI' } },
   { name: '½ mes de arriendo gratis x contrato 12 meses', icon: '🎊',
     values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: '$200.000 descuento campaña referidos', icon: '💰',
@@ -575,15 +575,15 @@ const promotions = [
   { name: '$100.000 descuento campaña referidos + 1 quincho', icon: '🎁',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'SI' } },
   { name: 'Garantía hasta en 3 cuotas', icon: '💳',
-    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'SI' } },
   { name: 'Bodega gratis 6 primeros meses x contrato 12 meses', icon: '📦',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Segundo estacionamiento gratis x 12 meses', icon: '🚗',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'SI', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: '3 meses estacionamiento gratis x contrato 12 meses', icon: '🅿️',
-    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Empresas: 2 meses arriendo gratis dividido en 3 (con convenio)', icon: '🏢',
-    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'EVAL', SPOT: 'NO', HOLLEY: 'SI', BELLET: 'SI', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'EVAL', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Gastos comunes 50% descuento', icon: '🧾',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } }
 ];
@@ -791,16 +791,14 @@ function renderDetail() {
         </h3>
       `;
       
-      // Glosa especial del proyecto (ej. Brooklyn: no acumulables)
-      if (projectNotes[currentProject]) {
-        html += `
-          <div style="background:linear-gradient(90deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05));
-                      border-left:3px solid #eab308; padding:10px 14px; border-radius:8px;
-                      margin-bottom:14px; font-size:0.85rem; color:#fde68a">
-            ${projectNotes[currentProject]}
-          </div>
-        `;
-      }
+      // Glosa universal: las promociones nunca son acumulables
+      html += `
+        <div style="background:linear-gradient(90deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05));
+                    border-left:3px solid #eab308; padding:10px 14px; border-radius:8px;
+                    margin-bottom:14px; font-size:0.85rem; color:#fde68a">
+          ⚠️ Las promociones <strong>no son acumulables</strong> entre sí.
+        </div>
+      `;
       
       html += '<div class="promo-grid">';
       projectPromos.forEach(promo => {
