@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (por si más adelante usas un build)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+
+# Datos sensibles / temporales
+*.tmp
+*.bak
+~$*
+*.xlsx
+*.xls
+*.csv
+
+# Logs
+*.log

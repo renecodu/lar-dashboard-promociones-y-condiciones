@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Panel Multifamily — LAR Group</title>
+<!--
+  Panel Multifamily LAR Group — datos reales del 3-may-2026.
+  Fuentes: archivos "unidades" (3.205 deps) y "reservas" (4.057 reservas, 2.861 contratos).
+-->
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #F4F6FA; color: #1F2A44;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, #1F2A44 0%, #2E5A87 100%);
+    color: #fff; padding: 24px 28px; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(31,42,68,0.12);
+    display: flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 12px;
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  header .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+  header .month-pill {
+    background: rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 999px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .summary {
+    background: #fff; border-radius: 12px; padding: 22px 26px; margin-top: 18px;
+    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
+    border-left: 4px solid #2E5A87;
+  }
+  .summary h2 {
+    margin: 0 0 10px 0; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: #2E5A87;
+  }
+  .summary p { margin: 0 0 10px 0; font-size: 14.5px; line-height: 1.55; color: #2D3A56; }
+  .summary p:last-child { margin-bottom: 0; }
+  .kpi-section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #5A6478;
+    margin: 18px 4px 8px 4px;
+  }
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  .kpi {
+    background: #fff; border-radius: 12px; padding: 16px 18px;
+    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
+    border-top: 4px solid #2E5A87;
+    position: relative; overflow: hidden;
+  }
+  .kpi.green { border-top-color: #2D8A4E; }
+  .kpi.yellow { border-top-color: #C28D1A; }
+  .kpi.red { border-top-color: #B23A3A; }
+  .kpi .label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #5A6478;
+  }
+  .kpi .value {
+    font-size: 28px; font-weight: 700; margin-top: 4px; color: #1F2A44;
+    letter-spacing: -0.02em; line-height: 1.15;
+  }
+  .kpi .delta { font-size: 12px; margin-top: 4px; font-weight: 600; color: #5A6478; line-height: 1.35; }
+  .kpi.green .delta { color: #2D8A4E; }
+  .kpi.yellow .delta { color: #C28D1A; }
+  .kpi.red .delta { color: #B23A3A; }
+  .kpi .badge {
+    position: absolute; top: 14px; right: 14px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #2D8A4E;
+  }
+  .kpi.yellow .badge { background: #E0A82E; }
+  .kpi.red .badge { background: #C94A4A; }
+  .kpi.neutral .badge { display: none; }
+
+  .card {
+    background: #fff; border-radius: 12px; padding: 20px 22px;
+    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
+    margin-top: 18px;
+  }
+  .card h3 {
+    margin: 0 0 14px 0; font-size: 14px; font-weight: 700;
+    color: #1F2A44; letter-spacing: -0.01em;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .row2 .card { margin-top: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th {
+    text-align: left; padding: 9px 7px;
+    background: #F4F6FA; color: #2E5A87; font-weight: 700;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 2px solid #E0E4EC; white-space: nowrap;
+  }
+  tbody td {
+    padding: 9px 7px; border-bottom: 1px solid #EDEFF4; vertical-align: middle;
+  }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill {
+    display: inline-block; padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+  }
+  .pill.green { background: #DCEFE1; color: #1E6B3A; }
+  .pill.yellow { background: #FBEFCC; color: #8C6614; }
+  .pill.red { background: #F6D5D5; color: #8E2929; }
+  .delta-cell.green { color: #1E6B3A; font-weight: 700; }
+  .delta-cell.yellow { color: #8C6614; font-weight: 700; }
+  .delta-cell.red { color: #8E2929; font-weight: 700; }
+  .ok-fuga { font-size: 11px; }
+  .ok-fuga .ok { color: #1E6B3A; font-weight: 700; }
+  .ok-fuga .fuga { color: #8E2929; font-weight: 700; }
+  .ok-fuga .sep { color: #B0B6C2; margin: 0 4px; }
+
+  .footer {
+    margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 12px;
+    font-size: 12px; color: #5A6478;
+    border-left: 3px solid #C28D1A;
+    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
+    line-height: 1.5;
+  }
+  .footer strong { color: #1F2A44; }
+
+  @media (max-width: 980px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .row2 { grid-template-columns: 1fr; }
+  }
+  .scroll-x { overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Panel Multifamily — LAR Group</h1>
+      <div class="sub">Ocupación, pipeline comercial y forecast — snapshot diario</div>
+    </div>
+    <div class="month-pill" id="month-pill">Cargando…</div>
+  </header>
+
+  <section class="summary">
+    <h2>Resumen ejecutivo</h2>
+    <div id="exec-summary">Generando análisis…</div>
+  </section>
+
+  <div class="kpi-section-label">Ocupación del portafolio</div>
+  <section class="kpi-grid" id="kpi-grid-ocup"></section>
+
+  <div class="kpi-section-label">Pipeline comercial</div>
+  <section class="kpi-grid" id="kpi-grid-com"></section>
+
+  <section class="card">
+    <h3>Detalle por propiedad</h3>
+    <div class="scroll-x">
+      <table id="properties-table">
+        <thead>
+          <tr>
+            <th>Propiedad</th>
+            <th class="num">Deptos</th>
+            <th class="num">Ocup.</th>
+            <th class="num">Variación</th>
+            <th class="num">Disponibles</th>
+            <th class="num">Pipeline</th>
+            <th class="num">Reservas 30d</th>
+            <th class="num">Contratos mayo</th>
+            <th class="num">Forecast 120d</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="properties-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="row2">
+    <section class="card">
+      <h3>Forecast de ingresos · próximos 120 días</h3>
+      <canvas id="forecast-chart" height="220"></canvas>
+      <div id="forecast-legend" style="margin-top:12px; font-size:12px; color:#2D3A56; line-height:1.5;"></div>
+    </section>
+
+    <section class="card">
+      <h3>Composición del portafolio</h3>
+      <canvas id="donut-chart" height="220"></canvas>
+      <div id="donut-legend" style="margin-top:12px; font-size:12px; color:#2D3A56; line-height:1.5;"></div>
+    </section>
+  </div>
+
+  <div class="footer">
+    <strong>Fuentes:</strong> archivos <em>unidades</em> y <em>reservas</em> exportados el 3-may-2026 (3.205 departamentos en 12 propiedades, 4.057 reservas históricas, 2.861 contratos). El forecast considera reservas activas (Creada + Pagada + Confirmada) cuya <em>Fecha Declarada Ingreso</em> cae en los próximos 120 días. La <strong>meta de ocupación está en 95% como placeholder</strong> hasta cargar tus presupuestos reales por edificio.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
+  const MES_ACTUAL = "Mayo 2026 — snapshot 3-may";
+  const META_OCUPACION_DEFAULT = 0.95;
+
+  // ----- Inventario (snapshot del archivo unidades) -----
+  const PROPIEDADES_RAW = [
+    { nombre: "Blend Apoquindo",     unidades: 95,  arrendados: 53,  disponibles: 22, noDisp: 20, porRenovar: 0  },
+    { nombre: "Boldo Club de Campo", unidades: 126, arrendados: 120, disponibles: 5,  noDisp: 1,  porRenovar: 0  },
+    { nombre: "Brooklyn La Florida", unidades: 478, arrendados: 422, disponibles: 45, noDisp: 11, porRenovar: 18 },
+    { nombre: "Central Santiago",    unidades: 562, arrendados: 519, disponibles: 40, noDisp: 3,  porRenovar: 16 },
+    { nombre: "IMU San Cristóbal",   unidades: 453, arrendados: 317, disponibles: 67, noDisp: 69, porRenovar: 3  },
+    { nombre: "Nativo Riesco",       unidades: 255, arrendados: 241, disponibles: 13, noDisp: 1,  porRenovar: 1  },
+    { nombre: "Nomad Bellet",        unidades: 134, arrendados: 125, disponibles: 7,  noDisp: 2,  porRenovar: 0  },
+    { nombre: "Nomad Holley",        unidades: 208, arrendados: 197, disponibles: 8,  noDisp: 3,  porRenovar: 0  },
+    { nombre: "Park Santiago",       unidades: 314, arrendados: 300, disponibles: 13, noDisp: 1,  porRenovar: 5  },
+    { nombre: "Soho Barrio Italia",  unidades: 96,  arrendados: 92,  disponibles: 4,  noDisp: 0,  porRenovar: 0  },
+    { nombre: "Spot Nueva Kennedy",  unidades: 296, arrendados: 266, disponibles: 27, noDisp: 3,  porRenovar: 0  },
+    { nombre: "Spot Residence",      unidades: 188, arrendados: 157, disponibles: 24, noDisp: 7,  porRenovar: 8  },
+  ];
+
+  // ----- Métricas comerciales (snapshot del archivo reservas) -----
+  const COMERCIAL = {
+    "Blend Apoquindo":     { pipeline: 5,  res30dTotal: 4,  res30dOk: 3,  res30dFuga: 0, contratosMes: 1,  forecast120d: 3  },
+    "Boldo Club de Campo": { pipeline: 13, res30dTotal: 3,  res30dOk: 3,  res30dFuga: 0, contratosMes: 0,  forecast120d: 2  },
+    "Brooklyn La Florida": { pipeline: 9,  res30dTotal: 26, res30dOk: 21, res30dFuga: 5, contratosMes: 11, forecast120d: 6  },
+    "Central Santiago":    { pipeline: 22, res30dTotal: 33, res30dOk: 23, res30dFuga: 8, contratosMes: 12, forecast120d: 12 },
+    "IMU San Cristóbal":   { pipeline: 85, res30dTotal: 15, res30dOk: 13, res30dFuga: 1, contratosMes: 3,  forecast120d: 6  },
+    "Nativo Riesco":       { pipeline: 13, res30dTotal: 15, res30dOk: 13, res30dFuga: 0, contratosMes: 0,  forecast120d: 5  },
+    "Nomad Bellet":        { pipeline: 2,  res30dTotal: 8,  res30dOk: 5,  res30dFuga: 3, contratosMes: 1,  forecast120d: 1  },
+    "Nomad Holley":        { pipeline: 3,  res30dTotal: 7,  res30dOk: 6,  res30dFuga: 1, contratosMes: 1,  forecast120d: 3  },
+    "Park Santiago":       { pipeline: 4,  res30dTotal: 11, res30dOk: 6,  res30dFuga: 4, contratosMes: 0,  forecast120d: 1  },
+    "Soho Barrio Italia":  { pipeline: 28, res30dTotal: 2,  res30dOk: 2,  res30dFuga: 0, contratosMes: 2,  forecast120d: 1  },
+    "Spot Nueva Kennedy":  { pipeline: 19, res30dTotal: 10, res30dOk: 9,  res30dFuga: 1, contratosMes: 6,  forecast120d: 5  },
+    "Spot Residence":      { pipeline: 17, res30dTotal: 22, res30dOk: 15, res30dFuga: 7, contratosMes: 6,  forecast120d: 9  },
+  };
+
+  // Forecast por mes (Fecha Declarada Ingreso, próximos 120 días)
+  const FORECAST_MES = {
+    labels: ["May 2026", "Jun 2026", "Jul 2026", "Ago 2026"],
+    total:  [42, 11, 1, 0],
+  };
+
+  const PROPIEDADES = PROPIEDADES_RAW.map(p => ({
+    ...p,
+    real: p.arrendados / p.unidades,
+    pres: META_OCUPACION_DEFAULT,
+    com: COMERCIAL[p.nombre],
+  }));
+
+  // ----- Helpers -----
+  function semaforo(real, pres) {
+    const d = real - pres;
+    if (d >= 0) return "green";
+    if (d >= -0.02) return "yellow";
+    return "red";
+  }
+  function pct(x) { return (x * 100).toFixed(1) + "%"; }
+  function pp(x)  { return (x >= 0 ? "+" : "") + (x * 100).toFixed(1) + " pp"; }
+  function fmtNum(x) { return x.toLocaleString("es-CL"); }
+
+  function agregados(props) {
+    const totalUnidades = props.reduce((s, p) => s + p.unidades, 0);
+    const totalArrendados = props.reduce((s, p) => s + p.arrendados, 0);
+    const totalDisponibles = props.reduce((s, p) => s + p.disponibles, 0);
+    const totalNoDisp = props.reduce((s, p) => s + p.noDisp, 0);
+    const ocupRealW = totalArrendados / totalUnidades;
+    const ocupPresW = props.reduce((s, p) => s + p.pres * p.unidades, 0) / totalUnidades;
+    const totalPorRenovar = props.reduce((s, p) => s + p.porRenovar, 0);
+    const totalPipeline = props.reduce((s, p) => s + p.com.pipeline, 0);
+    const totalRes30d = props.reduce((s, p) => s + p.com.res30dTotal, 0);
+    const totalRes30dOk = props.reduce((s, p) => s + p.com.res30dOk, 0);
+    const totalRes30dFuga = props.reduce((s, p) => s + p.com.res30dFuga, 0);
+    const totalContratos = props.reduce((s, p) => s + p.com.contratosMes, 0);
+    const totalForecast = props.reduce((s, p) => s + p.com.forecast120d, 0);
+    return {
+      totalUnidades, totalArrendados, totalDisponibles, totalNoDisp,
+      ocupRealW, ocupPresW, totalPorRenovar,
+      totalPipeline, totalRes30d, totalRes30dOk, totalRes30dFuga,
+      totalContratos, totalForecast,
+    };
+  }
+
+  function render() {
+    document.getElementById("month-pill").textContent = MES_ACTUAL;
+
+    const agg = agregados(PROPIEDADES);
+    const semGlobal = semaforo(agg.ocupRealW, agg.ocupPresW);
+    const tasaFuga = agg.totalRes30d > 0 ? agg.totalRes30dFuga / agg.totalRes30d : 0;
+    const tasaOk = agg.totalRes30d > 0 ? agg.totalRes30dOk / agg.totalRes30d : 0;
+    const semFuga = tasaFuga <= 0.15 ? "green" : (tasaFuga <= 0.25 ? "yellow" : "red");
+
+    // ----- KPIs Ocupación -----
+    const kpisOcup = [
+      { label: "Ocupación real", value: pct(agg.ocupRealW),
+        delta: fmtNum(agg.totalArrendados) + " de " + fmtNum(agg.totalUnidades) + " deptos arrendados",
+        sem: semGlobal },
+      { label: "Meta de ocupación", value: pct(agg.ocupPresW),
+        delta: "Placeholder — pendiente cargar presupuesto real", sem: "yellow" },
+      { label: "Variación vs meta", value: pp(agg.ocupRealW - agg.ocupPresW),
+        delta: semGlobal === "green" ? "Sobre meta" : (semGlobal === "yellow" ? "Levemente bajo meta" : "Bajo meta significativo"),
+        sem: semGlobal },
+      { label: "Próximas renovaciones", value: fmtNum(agg.totalPorRenovar),
+        delta: fmtNum(agg.totalDisponibles) + " disponibles para arriendo", sem: "neutral" },
+    ];
+    document.getElementById("kpi-grid-ocup").innerHTML = kpisOcup.map(k => `
+      <div class="kpi ${k.sem}"><div class="badge"></div>
+        <div class="label">${k.label}</div>
+        <div class="value">${k.value}</div>
+        <div class="delta">${k.delta}</div>
+      </div>
+    `).join("");
+
+    // ----- KPIs Comerciales -----
+    const kpisCom = [
+      { label: "Pipeline activo", value: fmtNum(agg.totalPipeline),
+        delta: "Reservas Creadas + Pagadas a confirmar", sem: "neutral" },
+      { label: "Reservas últimos 30 días", value: fmtNum(agg.totalRes30d),
+        delta: agg.totalRes30dOk + " avanzando · " + agg.totalRes30dFuga + " caídas",
+        sem: "neutral" },
+      { label: "Tasa de fuga 30d", value: pct(tasaFuga),
+        delta: pct(tasaOk) + " avance · " + (tasaFuga <= 0.15 ? "Saludable" : (tasaFuga <= 0.25 ? "Vigilar" : "Crítica")),
+        sem: semFuga },
+      { label: "Contratos firmados (mayo)", value: fmtNum(agg.totalContratos),
+        delta: "Inicio de contrato en mayo 2026", sem: "neutral" },
+    ];
+    document.getElementById("kpi-grid-com").innerHTML = kpisCom.map(k => `
+      <div class="kpi ${k.sem}"><div class="badge"></div>
+        <div class="label">${k.label}</div>
+        <div class="value">${k.value}</div>
+        <div class="delta">${k.delta}</div>
+      </div>
+    `).join("");
+
+    // ----- Resumen ejecutivo integrado -----
+    const peores = [...PROPIEDADES].sort((a,b) => (a.real-a.pres) - (b.real-b.pres)).slice(0, 3);
+    const verdes = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "green").length;
+    const amarillas = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "yellow").length;
+    const rojas = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "red").length;
+
+    // Top propiedades por actividad comercial
+    const topAct = [...PROPIEDADES].sort((a,b) => b.com.res30dTotal - a.com.res30dTotal).slice(0, 3);
+    const topPipeline = [...PROPIEDADES].sort((a,b) => b.com.pipeline - a.com.pipeline).slice(0, 3);
+    // Propiedades con fuga preocupante
+    const topFuga = PROPIEDADES.filter(p => p.com.res30dTotal >= 5)
+      .sort((a,b) => (b.com.res30dFuga/b.com.res30dTotal) - (a.com.res30dFuga/a.com.res30dTotal))[0];
+
+    document.getElementById("exec-summary").innerHTML = `
+      <p><strong>Ocupación.</strong> El portafolio LAR Group cierra el snapshot del 3-may con <strong>${fmtNum(agg.totalArrendados)} de ${fmtNum(agg.totalUnidades)}</strong> departamentos arrendados — ocupación ponderada de <strong>${pct(agg.ocupRealW)}</strong>, <strong>${pp(agg.ocupRealW - agg.ocupPresW)}</strong> respecto a la meta del ${pct(agg.ocupPresW)}. ${verdes} propiedades en verde, ${amarillas} en amarillo y <strong>${rojas} en rojo</strong>; foco en <strong>${peores[0].nombre}</strong> (${pct(peores[0].real)}), <strong>${peores[1].nombre}</strong> (${pct(peores[1].real)}) y <strong>${peores[2].nombre}</strong> (${pct(peores[2].real)}).</p>
+      <p><strong>Pipeline comercial.</strong> Hay <strong>${fmtNum(agg.totalPipeline)} reservas activas</strong> en el embudo (Creadas + Pagadas), concentradas en <strong>${topPipeline[0].nombre}</strong> (${topPipeline[0].com.pipeline}), <strong>${topPipeline[1].nombre}</strong> (${topPipeline[1].com.pipeline}) y <strong>${topPipeline[2].nombre}</strong> (${topPipeline[2].com.pipeline}). En los últimos 30 días entraron <strong>${agg.totalRes30d} reservas</strong> con tasa de avance del <strong>${pct(tasaOk)}</strong> y fuga del <strong>${pct(tasaFuga)}</strong>${topFuga ? ` — la propiedad con peor desempeño relativo es <strong>${topFuga.nombre}</strong> (${pct(topFuga.com.res30dFuga/topFuga.com.res30dTotal)} de fuga)` : ""}. Las más activas son ${topAct.map(p => `<strong>${p.nombre}</strong> (${p.com.res30dTotal})`).join(", ")}.</p>
+      <p><strong>Forecast 120 días.</strong> Hay <strong>${fmtNum(agg.totalForecast)} reservas activas con fecha de ingreso comprometida</strong> en los próximos 4 meses — ${FORECAST_MES.total[0]} en mayo, ${FORECAST_MES.total[1]} en junio, ${FORECAST_MES.total[2]} en julio. Si todas se materializan, suben la ocupación del portafolio al <strong>${pct((agg.totalArrendados + agg.totalForecast) / agg.totalUnidades)}</strong>. Este mes ya se firmaron <strong>${agg.totalContratos} contratos</strong> con inicio en mayo, principalmente en Central Santiago (12), Brooklyn La Florida (11), Spot Residence (6) y Spot Nueva Kennedy (6).</p>
+    `;
+
+    // ----- Tabla por propiedad -----
+    const tbody = document.getElementById("properties-tbody");
+    tbody.innerHTML = "";
+    const ordenadas = [...PROPIEDADES].sort((a, b) => (a.real - a.pres) - (b.real - b.pres));
+    ordenadas.forEach(p => {
+      const sem = semaforo(p.real, p.pres);
+      const dPP = pp(p.real - p.pres);
+      const semLabel = sem === "green" ? "Sobre meta" : (sem === "yellow" ? "Cerca de meta" : "Bajo meta");
+      const c = p.com;
+      const okFuga = c.res30dTotal > 0
+        ? `<span class="ok-fuga"><span class="ok">${c.res30dOk}↑</span><span class="sep">·</span><span class="fuga">${c.res30dFuga}↓</span> <span style="color:#5A6478">(${c.res30dTotal})</span></span>`
+        : `<span style="color:#B0B6C2">—</span>`;
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${p.nombre}</td>
+        <td class="num">${fmtNum(p.unidades)}</td>
+        <td class="num">${pct(p.real)}</td>
+        <td class="num delta-cell ${sem}">${dPP}</td>
+        <td class="num">${fmtNum(p.disponibles)}</td>
+        <td class="num">${c.pipeline > 0 ? fmtNum(c.pipeline) : "—"}</td>
+        <td class="num">${okFuga}</td>
+        <td class="num">${c.contratosMes > 0 ? fmtNum(c.contratosMes) : "—"}</td>
+        <td class="num">${c.forecast120d > 0 ? fmtNum(c.forecast120d) : "—"}</td>
+        <td><span class="pill ${sem}">${semLabel}</span></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    // ----- Forecast chart -----
+    const ctxF = document.getElementById("forecast-chart").getContext("2d");
+    new Chart(ctxF, {
+      type: "bar",
+      data: {
+        labels: FORECAST_MES.labels,
+        datasets: [{
+          label: "Ingresos esperados",
+          data: FORECAST_MES.total,
+          backgroundColor: ["#2E5A87", "#4A7BAB", "#6B98C0", "#8FB6D4"],
+          borderRadius: 6,
+          maxBarThickness: 60,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => fmtNum(c.parsed.y) + " ingresos" } },
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { font: { size: 11 } }, grid: { color: "#EDEFF4" } },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+    document.getElementById("forecast-legend").innerHTML = `
+      <strong>${fmtNum(agg.totalForecast)}</strong> reservas activas con fecha declarada de ingreso entre el 3-may y el 31-ago. La concentración en mayo refleja contratos próximos a iniciar; la cola corta para julio-agosto sugiere oportunidad de adelantar gestión comercial para llenar esos meses.
+    `;
+
+    // ----- Donut chart -----
+    const ctxD = document.getElementById("donut-chart").getContext("2d");
+    new Chart(ctxD, {
+      type: "doughnut",
+      data: {
+        labels: ["Arrendados", "Disponibles", "No disponibles"],
+        datasets: [{
+          data: [agg.totalArrendados, agg.totalDisponibles, agg.totalNoDisp],
+          backgroundColor: ["#2D8A4E", "#E0A82E", "#B23A3A"],
+          borderColor: "#fff", borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: "62%",
+        plugins: {
+          legend: { position: "bottom", labels: { font: { size: 11 }, padding: 12 } },
+          tooltip: {
+            callbacks: {
+              label: c => c.label + ": " + fmtNum(c.parsed) + " (" + (c.parsed / agg.totalUnidades * 100).toFixed(1) + "%)",
+            },
+          },
+        },
+      },
+    });
+    document.getElementById("donut-legend").innerHTML = `
+      <strong>${fmtNum(agg.totalUnidades)}</strong> departamentos en 12 propiedades. ${fmtNum(agg.totalDisponibles)} listos para nuevo arriendo, ${fmtNum(agg.totalNoDisp)} fuera de stock (mantención, reservadas, en obra).
+    `;
+  }
+
+  document.addEventListener("DOMContentLoaded", render);
+</script>
+</body>
+</html>
