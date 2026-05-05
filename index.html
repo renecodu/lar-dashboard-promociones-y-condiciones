@@ -1,443 +1,945 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Panel Multifamily — LAR Group</title>
-<!--
-  Panel Multifamily LAR Group — datos reales del 3-may-2026.
-  Fuentes: archivos "unidades" (3.205 deps) y "reservas" (4.057 reservas, 2.861 contratos).
--->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz Comercial LAR - Dashboard Interactivo</title>
 <style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
+  /* === PALETA CORPORATIVA LAR GROUP ===
+     Verde petróleo (primario): #08424D
+     Turquesa / aqua (acento):  #62ABBC
+     Turquesa claro:            #91CCD0
+     Negro:                     #000000
+     Variantes derivadas para UI dark mode coherente */
+  :root {
+    --lar-primary:       #08424D;
+    --lar-primary-light: #0E5C6B;
+    --lar-primary-dark:  #052E36;
+    --lar-accent:        #62ABBC;
+    --lar-accent-light:  #91CCD0;
+    --lar-accent-dark:   #3D8A9D;
+    --lar-bg:            #051F25;
+    --lar-bg-2:          #0A2D34;
+    --lar-card:          #0E3D47;
+    --lar-card-soft:     rgba(14, 61, 71, 0.6);
+    --lar-text:          #E8F4F6;
+    --lar-text-soft:     #A5C4CA;
+    --lar-text-muted:    #6E8E94;
+  }
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    margin: 0; padding: 24px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    background: #F4F6FA; color: #1F2A44;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--lar-bg) 0%, var(--lar-bg-2) 100%);
+    color: var(--lar-text); min-height: 100vh; padding: 20px;
   }
-  .wrap { max-width: 1280px; margin: 0 auto; }
+  .container { max-width: 1400px; margin: 0 auto; }
   header {
-    background: linear-gradient(135deg, #1F2A44 0%, #2E5A87 100%);
-    color: #fff; padding: 24px 28px; border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(31,42,68,0.12);
-    display: flex; justify-content: space-between; align-items: flex-end;
-    flex-wrap: wrap; gap: 12px;
+    text-align: center; margin-bottom: 30px; padding: 30px 20px;
+    background: linear-gradient(135deg, var(--lar-primary) 0%, var(--lar-primary-light) 100%);
+    border-radius: 16px; border: 1px solid var(--lar-accent-dark);
+    box-shadow: 0 10px 30px rgba(8, 66, 77, 0.4);
   }
-  header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-  header .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
-  header .month-pill {
-    background: rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 999px;
-    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+  h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(90deg, #FFFFFF, var(--lar-accent-light));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 8px; letter-spacing: 0.5px;
   }
-  .summary {
-    background: #fff; border-radius: 12px; padding: 22px 26px; margin-top: 18px;
-    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
-    border-left: 4px solid #2E5A87;
+  .subtitle { color: var(--lar-accent-light); font-size: 1rem; }
+  
+  .project-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px; margin-bottom: 25px;
   }
-  .summary h2 {
-    margin: 0 0 10px 0; font-size: 13px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.08em; color: #2E5A87;
+  .project-btn {
+    padding: 14px 8px; background: var(--lar-card-soft);
+    border: 2px solid rgba(98, 171, 188, 0.25); border-radius: 12px;
+    color: var(--lar-text-soft); font-weight: 600; cursor: pointer;
+    transition: all 0.25s ease; font-size: 0.9rem; text-align: center; position: relative;
   }
-  .summary p { margin: 0 0 10px 0; font-size: 14.5px; line-height: 1.55; color: #2D3A56; }
-  .summary p:last-child { margin-bottom: 0; }
-  .kpi-section-label {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: #5A6478;
-    margin: 18px 4px 8px 4px;
+  .project-btn:hover {
+    border-color: var(--lar-accent);
+    background: rgba(98, 171, 188, 0.12);
+    transform: translateY(-2px);
   }
-  .kpi-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  .project-btn.active {
+    background: linear-gradient(135deg, var(--lar-primary), var(--lar-accent-dark));
+    border-color: var(--lar-accent); color: white;
+    box-shadow: 0 8px 20px rgba(98, 171, 188, 0.35);
   }
-  .kpi {
-    background: #fff; border-radius: 12px; padding: 16px 18px;
-    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
-    border-top: 4px solid #2E5A87;
-    position: relative; overflow: hidden;
+  .project-btn.collective { border-color: var(--lar-accent-light); }
+  .project-btn.collective.active {
+    background: linear-gradient(135deg, var(--lar-accent), var(--lar-accent-light));
+    color: var(--lar-primary-dark);
+    box-shadow: 0 8px 20px rgba(145, 204, 208, 0.4);
   }
-  .kpi.green { border-top-color: #2D8A4E; }
-  .kpi.yellow { border-top-color: #C28D1A; }
-  .kpi.red { border-top-color: #B23A3A; }
-  .kpi .label {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: #5A6478;
+  .badge-new {
+    position: absolute; top: -6px; right: -6px;
+    background: var(--lar-accent); color: var(--lar-primary-dark); font-size: 0.6rem;
+    padding: 2px 6px; border-radius: 10px; font-weight: 700;
   }
-  .kpi .value {
-    font-size: 28px; font-weight: 700; margin-top: 4px; color: #1F2A44;
-    letter-spacing: -0.02em; line-height: 1.15;
+  
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 20px; justify-content: space-between; align-items: center;
   }
-  .kpi .delta { font-size: 12px; margin-top: 4px; font-weight: 600; color: #5A6478; line-height: 1.35; }
-  .kpi.green .delta { color: #2D8A4E; }
-  .kpi.yellow .delta { color: #C28D1A; }
-  .kpi.red .delta { color: #B23A3A; }
-  .kpi .badge {
-    position: absolute; top: 14px; right: 14px;
-    width: 10px; height: 10px; border-radius: 50%;
-    background: #2D8A4E;
+  .mode-toggle {
+    display: flex; gap: 8px; background: var(--lar-card-soft);
+    padding: 6px; border-radius: 10px; flex-wrap: wrap;
+    border: 1px solid rgba(98, 171, 188, 0.15);
   }
-  .kpi.yellow .badge { background: #E0A82E; }
-  .kpi.red .badge { background: #C94A4A; }
-  .kpi.neutral .badge { display: none; }
-
-  .card {
-    background: #fff; border-radius: 12px; padding: 20px 22px;
-    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
-    margin-top: 18px;
+  .mode-btn {
+    padding: 8px 16px; background: transparent; border: none;
+    color: var(--lar-text-soft); border-radius: 8px; cursor: pointer;
+    font-weight: 500; transition: all 0.2s;
   }
-  .card h3 {
-    margin: 0 0 14px 0; font-size: 14px; font-weight: 700;
-    color: #1F2A44; letter-spacing: -0.01em;
+  .mode-btn.active {
+    background: var(--lar-accent); color: var(--lar-primary-dark); font-weight: 600;
   }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
-  .row2 .card { margin-top: 0; }
-
-  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  thead th {
-    text-align: left; padding: 9px 7px;
-    background: #F4F6FA; color: #2E5A87; font-weight: 700;
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
-    border-bottom: 2px solid #E0E4EC; white-space: nowrap;
+  .search-box {
+    flex: 1; min-width: 200px; padding: 10px 16px;
+    background: var(--lar-card-soft);
+    border: 1px solid rgba(98, 171, 188, 0.25);
+    border-radius: 10px; color: var(--lar-text); font-size: 0.95rem;
   }
-  tbody td {
-    padding: 9px 7px; border-bottom: 1px solid #EDEFF4; vertical-align: middle;
+  .search-box::placeholder { color: var(--lar-text-muted); }
+  .search-box:focus { outline: none; border-color: var(--lar-accent); }
+  
+  .category-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .cat-tab {
+    padding: 8px 16px; background: var(--lar-card-soft);
+    border: 1px solid rgba(98, 171, 188, 0.2); border-radius: 20px;
+    color: var(--lar-text-soft); cursor: pointer; font-size: 0.85rem;
+    font-weight: 500; transition: all 0.2s;
   }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pill {
-    display: inline-block; padding: 3px 10px; border-radius: 999px;
-    font-size: 11px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+  .cat-tab:hover { background: rgba(98, 171, 188, 0.15); }
+  .cat-tab.active {
+    background: var(--lar-accent);
+    color: var(--lar-primary-dark); border-color: var(--lar-accent); font-weight: 600;
   }
-  .pill.green { background: #DCEFE1; color: #1E6B3A; }
-  .pill.yellow { background: #FBEFCC; color: #8C6614; }
-  .pill.red { background: #F6D5D5; color: #8E2929; }
-  .delta-cell.green { color: #1E6B3A; font-weight: 700; }
-  .delta-cell.yellow { color: #8C6614; font-weight: 700; }
-  .delta-cell.red { color: #8E2929; font-weight: 700; }
-  .ok-fuga { font-size: 11px; }
-  .ok-fuga .ok { color: #1E6B3A; font-weight: 700; }
-  .ok-fuga .fuga { color: #8E2929; font-weight: 700; }
-  .ok-fuga .sep { color: #B0B6C2; margin: 0 4px; }
-
-  .footer {
-    margin-top: 18px; padding: 14px 18px; background: #fff; border-radius: 12px;
-    font-size: 12px; color: #5A6478;
-    border-left: 3px solid #C28D1A;
-    box-shadow: 0 1px 6px rgba(31,42,68,0.06);
-    line-height: 1.5;
+  
+  .detail-view {
+    background: var(--lar-card-soft); border-radius: 16px;
+    border: 1px solid rgba(98, 171, 188, 0.2); padding: 25px; margin-bottom: 20px;
+    backdrop-filter: blur(10px);
   }
-  .footer strong { color: #1F2A44; }
-
-  @media (max-width: 980px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .row2 { grid-template-columns: 1fr; }
+  .project-header {
+    display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+    padding-bottom: 15px; border-bottom: 1px solid rgba(98, 171, 188, 0.2);
   }
-  .scroll-x { overflow-x: auto; }
+  .project-icon {
+    width: 50px; height: 50px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--lar-primary), var(--lar-accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 700; color: white;
+    box-shadow: 0 4px 12px rgba(8, 66, 77, 0.5);
+  }
+  .project-icon.collective {
+    background: linear-gradient(135deg, var(--lar-accent), var(--lar-accent-light));
+    color: var(--lar-primary-dark);
+  }
+  .project-name { font-size: 1.6rem; font-weight: 700; color: white; }
+  .project-tag {
+    display: inline-block; margin-left: 10px; padding: 3px 10px;
+    background: rgba(98, 171, 188, 0.2); color: var(--lar-accent-light);
+    border-radius: 10px; font-size: 0.7rem; font-weight: 700; vertical-align: middle;
+  }
+  
+  .info-banner {
+    background: linear-gradient(90deg, rgba(98, 171, 188, 0.18), rgba(98, 171, 188, 0.05));
+    border-left: 3px solid var(--lar-accent); padding: 12px 16px;
+    border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem; color: var(--lar-accent-light);
+  }
+  
+  .section-title {
+    font-size: 1.1rem; font-weight: 600; color: var(--lar-accent-light);
+    margin: 20px 0 12px 0; padding-bottom: 6px;
+    border-bottom: 2px solid rgba(98, 171, 188, 0.3);
+    display: flex; align-items: center; gap: 8px;
+    justify-content: flex-start; flex-wrap: wrap;
+  }
+  .section-title:first-child { margin-top: 0; }
+  
+  .req-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .req-item {
+    display: grid; grid-template-columns: 220px 1fr; gap: 16px;
+    padding: 12px 14px; background: rgba(5, 31, 37, 0.5);
+    border-radius: 10px; border-left: 3px solid var(--lar-accent);
+  }
+  .req-label { font-weight: 600; color: var(--lar-accent-light); font-size: 0.9rem; }
+  .req-value { color: var(--lar-text); font-size: 0.9rem; line-height: 1.5; }
+  
+  .profile-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .profile-tab {
+    padding: 10px 16px; background: var(--lar-card-soft);
+    border: 1px solid rgba(98, 171, 188, 0.3); border-radius: 10px;
+    color: var(--lar-text-soft); cursor: pointer; font-size: 0.85rem;
+    font-weight: 500; transition: all 0.2s;
+  }
+  .profile-tab:hover { background: rgba(98, 171, 188, 0.15); }
+  .profile-tab.active {
+    background: var(--lar-accent);
+    color: var(--lar-primary-dark); border-color: var(--lar-accent); font-weight: 600;
+  }
+  
+  .promo-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;
+  }
+  .promo-card {
+    padding: 14px; border-radius: 12px; border: 2px solid;
+    transition: all 0.3s;
+  }
+  .promo-yes {
+    background: linear-gradient(135deg, rgba(98, 171, 188, 0.22), rgba(98, 171, 188, 0.06));
+    border-color: var(--lar-accent);
+  }
+  .promo-no {
+    background: rgba(5, 31, 37, 0.6);
+    border-color: rgba(110, 142, 148, 0.25); opacity: 0.55;
+  }
+  .promo-eval {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(234, 179, 8, 0.05));
+    border-color: rgba(234, 179, 8, 0.5);
+  }
+  .promo-status {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 700; margin-bottom: 8px;
+  }
+  .status-yes { background: var(--lar-accent); color: var(--lar-primary-dark); }
+  .status-no { background: var(--lar-text-muted); color: var(--lar-bg); }
+  .status-eval { background: #eab308; color: #1e293b; }
+  .promo-text { font-size: 0.88rem; color: var(--lar-text); line-height: 1.4; }
+  
+  .comparison-wrap {
+    overflow-x: auto; background: var(--lar-card-soft);
+    border-radius: 16px; border: 1px solid rgba(98, 171, 188, 0.2); padding: 20px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid rgba(98, 171, 188, 0.15); }
+  th {
+    background: var(--lar-primary); color: var(--lar-accent-light);
+    font-weight: 700; position: sticky; top: 0; text-align: center;
+    border-bottom: 2px solid var(--lar-accent);
+  }
+  th.collective-col {
+    background: var(--lar-accent-dark); color: white;
+  }
+  th:first-child { text-align: left; min-width: 180px; }
+  td:first-child {
+    font-weight: 600; color: var(--lar-text);
+    background: rgba(5, 31, 37, 0.5); min-width: 180px;
+  }
+  td { color: var(--lar-text-soft); vertical-align: top; text-align: center; }
+  tr:hover td { background: rgba(98, 171, 188, 0.06); }
+  .cell-yes { color: var(--lar-accent-light); font-weight: 700; }
+  .cell-no { color: var(--lar-text-muted); }
+  .cell-eval { color: #fbbf24; font-weight: 600; font-size: 0.78rem; }
+  
+  .badge {
+    display: inline-block; padding: 3px 8px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .badge-yes { background: rgba(98, 171, 188, 0.25); color: var(--lar-accent-light); }
+  .badge-no { background: rgba(110, 142, 148, 0.2); color: var(--lar-text-muted); }
+  .badge-eval { background: rgba(234, 179, 8, 0.2); color: #fbbf24; }
+  
+  .hidden { display: none !important; }
+  
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 15px;
+    padding: 12px; background: rgba(5, 31, 37, 0.5);
+    border-radius: 10px; font-size: 0.85rem;
+    border: 1px solid rgba(98, 171, 188, 0.15);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; color: var(--lar-text-soft); }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  
+  /* Logo monogram en header */
+  .lar-logo {
+    display: inline-block;
+    background: var(--lar-accent);
+    color: var(--lar-primary-dark);
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(98, 171, 188, 0.3);
+  }
+  .lar-logo small {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    margin-top: -2px;
+  }
+  
+  /* Fila título + fecha */
+  .header-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .header-title-row h1 { margin-bottom: 0; }
+  .today-date {
+    background: rgba(98, 171, 188, 0.18);
+    border: 1px solid var(--lar-accent);
+    color: var(--lar-accent-light);
+    padding: 8px 16px;
+    border-radius: 24px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+  .today-date::before {
+    content: '📅';
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 768px) {
+    h1 { font-size: 1.6rem; }
+    .req-item { grid-template-columns: 1fr; gap: 4px; }
+    .project-grid { grid-template-columns: repeat(3, 1fr); }
+  }
 </style>
 </head>
 <body>
-
-<div class="wrap">
+<div class="container">
   <header>
-    <div>
-      <h1>Panel Multifamily — LAR Group</h1>
-      <div class="sub">Ocupación, pipeline comercial y forecast — snapshot diario</div>
+    <div class="lar-logo">LAR<small>GROUP</small></div>
+    <div class="header-title-row">
+      <h1>Matriz Comercial</h1>
+      <div class="today-date" id="todayDate"></div>
     </div>
-    <div class="month-pill" id="month-pill">Cargando…</div>
+    <p class="subtitle">Requisitos, Condiciones y Promociones · 13 Proyectos</p>
   </header>
-
-  <section class="summary">
-    <h2>Resumen ejecutivo</h2>
-    <div id="exec-summary">Generando análisis…</div>
-  </section>
-
-  <div class="kpi-section-label">Ocupación del portafolio</div>
-  <section class="kpi-grid" id="kpi-grid-ocup"></section>
-
-  <div class="kpi-section-label">Pipeline comercial</div>
-  <section class="kpi-grid" id="kpi-grid-com"></section>
-
-  <section class="card">
-    <h3>Detalle por propiedad</h3>
-    <div class="scroll-x">
-      <table id="properties-table">
-        <thead>
-          <tr>
-            <th>Propiedad</th>
-            <th class="num">Deptos</th>
-            <th class="num">Ocup.</th>
-            <th class="num">Variación</th>
-            <th class="num">Disponibles</th>
-            <th class="num">Pipeline</th>
-            <th class="num">Reservas 30d</th>
-            <th class="num">Contratos mayo</th>
-            <th class="num">Forecast 120d</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody id="properties-tbody"></tbody>
-      </table>
+  <div class="controls">
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="detail">📋 Vista Detalle</button>
+      <button class="mode-btn" data-mode="compare">⚖️ Comparar Todos</button>
+      <button class="mode-btn" data-mode="promos">🎁 Promociones</button>
     </div>
-  </section>
-
-  <div class="row2">
-    <section class="card">
-      <h3>Forecast de ingresos · próximos 120 días</h3>
-      <canvas id="forecast-chart" height="220"></canvas>
-      <div id="forecast-legend" style="margin-top:12px; font-size:12px; color:#2D3A56; line-height:1.5;"></div>
-    </section>
-
-    <section class="card">
-      <h3>Composición del portafolio</h3>
-      <canvas id="donut-chart" height="220"></canvas>
-      <div id="donut-legend" style="margin-top:12px; font-size:12px; color:#2D3A56; line-height:1.5;"></div>
-    </section>
+    <input type="text" id="search" class="search-box" placeholder="🔍 Buscar requisito o condición...">
   </div>
-
-  <div class="footer">
-    <strong>Fuentes:</strong> archivos <em>unidades</em> y <em>reservas</em> exportados el 3-may-2026 (3.205 departamentos en 12 propiedades, 4.057 reservas históricas, 2.861 contratos). El forecast considera reservas activas (Creada + Pagada + Confirmada) cuya <em>Fecha Declarada Ingreso</em> cae en los próximos 120 días. La <strong>meta de ocupación está en 95% como placeholder</strong> hasta cargar tus presupuestos reales por edificio.
+  <div id="detailMode">
+    <div class="project-grid" id="projectGrid"></div>
+    <div class="category-tabs" id="categoryTabs">
+      <button class="cat-tab active" data-cat="all">Todos</button>
+      <button class="cat-tab" data-cat="todos">📄 Documentos Generales</button>
+      <button class="cat-tab" data-cat="dependientes">💼 Dependientes</button>
+      <button class="cat-tab" data-cat="independientes">🧑‍💻 Independientes</button>
+      <button class="cat-tab" data-cat="juridica">🏢 Persona Jurídica</button>
+      <button class="cat-tab" data-cat="aval">🛡️ Aval & Garantías</button>
+      <button class="cat-tab" data-cat="extras">⚡ Extras</button>
+    </div>
+    <div class="detail-view" id="detailView"></div>
+  </div>
+  <div id="compareMode" class="hidden">
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#62ABBC"></span>Disponible</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#6E8E94"></span>No disponible</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#eab308"></span>En evaluación</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#91CCD0"></span>Collective (condiciones distintas)</div>
+    </div>
+    <div class="comparison-wrap"><table id="compareTable"></table></div>
+  </div>
+  <div id="promosMode" class="hidden">
+    <div class="comparison-wrap"><table id="promosTable"></table></div>
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <script>
-  const MES_ACTUAL = "Mayo 2026 — snapshot 3-may";
-  const META_OCUPACION_DEFAULT = 0.95;
+const projects = ['SOHO','PARK','CENTRAL','BOLDO','SPOT','HOLLEY','BELLET','IMU','BROOKLYN','NATIVO','RESIDENCE','URBANA','COLLECTIVE'];
 
-  // ----- Inventario (snapshot del archivo unidades) -----
-  const PROPIEDADES_RAW = [
-    { nombre: "Blend Apoquindo",     unidades: 95,  arrendados: 53,  disponibles: 22, noDisp: 20, porRenovar: 0  },
-    { nombre: "Boldo Club de Campo", unidades: 126, arrendados: 120, disponibles: 5,  noDisp: 1,  porRenovar: 0  },
-    { nombre: "Brooklyn La Florida", unidades: 478, arrendados: 422, disponibles: 45, noDisp: 11, porRenovar: 18 },
-    { nombre: "Central Santiago",    unidades: 562, arrendados: 519, disponibles: 40, noDisp: 3,  porRenovar: 16 },
-    { nombre: "IMU San Cristóbal",   unidades: 453, arrendados: 317, disponibles: 67, noDisp: 69, porRenovar: 3  },
-    { nombre: "Nativo Riesco",       unidades: 255, arrendados: 241, disponibles: 13, noDisp: 1,  porRenovar: 1  },
-    { nombre: "Nomad Bellet",        unidades: 134, arrendados: 125, disponibles: 7,  noDisp: 2,  porRenovar: 0  },
-    { nombre: "Nomad Holley",        unidades: 208, arrendados: 197, disponibles: 8,  noDisp: 3,  porRenovar: 0  },
-    { nombre: "Park Santiago",       unidades: 314, arrendados: 300, disponibles: 13, noDisp: 1,  porRenovar: 5  },
-    { nombre: "Soho Barrio Italia",  unidades: 96,  arrendados: 92,  disponibles: 4,  noDisp: 0,  porRenovar: 0  },
-    { nombre: "Spot Nueva Kennedy",  unidades: 296, arrendados: 266, disponibles: 27, noDisp: 3,  porRenovar: 0  },
-    { nombre: "Spot Residence",      unidades: 188, arrendados: 157, disponibles: 24, noDisp: 7,  porRenovar: 8  },
-  ];
+// Fecha de hoy en español, capitalizada
+(function setTodayDate() {
+  const today = new Date();
+  const formatted = today.toLocaleDateString('es-CL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  // Capitalizar primera letra (es-CL devuelve "lunes, 5 de mayo de 2026")
+  const capitalized = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  const el = document.getElementById('todayDate');
+  if (el) el.textContent = capitalized;
+})();
 
-  // ----- Métricas comerciales (snapshot del archivo reservas) -----
-  const COMERCIAL = {
-    "Blend Apoquindo":     { pipeline: 5,  res30dTotal: 4,  res30dOk: 3,  res30dFuga: 0, contratosMes: 1,  forecast120d: 3  },
-    "Boldo Club de Campo": { pipeline: 13, res30dTotal: 3,  res30dOk: 3,  res30dFuga: 0, contratosMes: 0,  forecast120d: 2  },
-    "Brooklyn La Florida": { pipeline: 9,  res30dTotal: 26, res30dOk: 21, res30dFuga: 5, contratosMes: 11, forecast120d: 6  },
-    "Central Santiago":    { pipeline: 22, res30dTotal: 33, res30dOk: 23, res30dFuga: 8, contratosMes: 12, forecast120d: 12 },
-    "IMU San Cristóbal":   { pipeline: 85, res30dTotal: 15, res30dOk: 13, res30dFuga: 1, contratosMes: 3,  forecast120d: 6  },
-    "Nativo Riesco":       { pipeline: 13, res30dTotal: 15, res30dOk: 13, res30dFuga: 0, contratosMes: 0,  forecast120d: 5  },
-    "Nomad Bellet":        { pipeline: 2,  res30dTotal: 8,  res30dOk: 5,  res30dFuga: 3, contratosMes: 1,  forecast120d: 1  },
-    "Nomad Holley":        { pipeline: 3,  res30dTotal: 7,  res30dOk: 6,  res30dFuga: 1, contratosMes: 1,  forecast120d: 3  },
-    "Park Santiago":       { pipeline: 4,  res30dTotal: 11, res30dOk: 6,  res30dFuga: 4, contratosMes: 0,  forecast120d: 1  },
-    "Soho Barrio Italia":  { pipeline: 28, res30dTotal: 2,  res30dOk: 2,  res30dFuga: 0, contratosMes: 2,  forecast120d: 1  },
-    "Spot Nueva Kennedy":  { pipeline: 19, res30dTotal: 10, res30dOk: 9,  res30dFuga: 1, contratosMes: 6,  forecast120d: 5  },
-    "Spot Residence":      { pipeline: 17, res30dTotal: 22, res30dOk: 15, res30dFuga: 7, contratosMes: 6,  forecast120d: 9  },
-  };
+const requirements = {
+  todos: [
+    { label: 'Cédula de Identidad', values: { all: 'Fotocopia Cédula Identidad (Tiro / Retiro) con vigencia durante el período del contrato', COLLECTIVE: 'Fotocopia ambos lados' } },
+    { label: 'Pasaporte', values: { all: 'Fotocopia Pasaporte con vigencia durante el período de contrato', COLLECTIVE: '—' }, note: 'LAR: solo extranjeros de UE, EEUU, China, Brasil. Otras nacionalidades requieren Visa o CI.' },
+    { label: 'Residencia Permanente', values: { all: 'SI', COLLECTIVE: 'SI' } },
+    { label: 'Extranjeros con VISA', values: { all: 'Visa permanente, de trabajo, estudios o en trámite (con vigencia al inicio del contrato)', COLLECTIVE: '—' } },
+    { label: 'Extranjeros con RUT provisorio', values: {
+      SOHO: 'No', BOLDO: 'No', NATIVO: 'No', RESIDENCE: 'No', URBANA: 'No',
+      PARK: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      CENTRAL: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      SPOT: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      HOLLEY: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      BELLET: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      IMU: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      BROOKLYN: 'Con contrato de trabajo, certificado estudios, pagando 12 meses adelantado o 3 meses de garantía (sin aval)',
+      COLLECTIVE: '—'
+    } },
+    { label: 'Certificado Antecedentes', values: { all: 'SI', COLLECTIVE: 'Sin antecedentes' } },
+    { label: 'Informe Dicom (Infocheck)', values: { all: 'Equifax Platinum 360 calificación 999', COLLECTIVE: 'Equifax Platinum 360 Calificación 999' } },
+    { label: 'Renta requerida titular (Dep./Indep.)', values: {
+      SOHO: '3 rentas líquidas, con Aval', PARK: '3 rentas líquidas, con Aval',
+      CENTRAL: '3 rentas líquidas, con Aval', BOLDO: '3 rentas líquidas, con Aval',
+      SPOT: '3 rentas líquidas, con Aval', HOLLEY: '3 rentas líquidas, con Aval',
+      BELLET: '3 rentas líquidas, con Aval', IMU: '3 rentas líquidas, con Aval',
+      BROOKLYN: '3 rentas líquidas, con Aval', NATIVO: '3 rentas líquidas, con Aval',
+      RESIDENCE: '3 rentas líquidas, con Aval', URBANA: '3 rentas líquidas, con Aval',
+      COLLECTIVE: '2,5 x renta del depto'
+    } },
+    { label: 'Acreditación Renta (Medida temporal)', values: {
+      SOHO: '—', SPOT: '—', BROOKLYN: '—', RESIDENCE: '—', COLLECTIVE: '—',
+      PARK: '2,5 rentas líquidas (sin complemento), Sin Aval (medida temporal)',
+      CENTRAL: '2,5 rentas líquidas (sin complemento), Sin Aval (medida temporal)',
+      HOLLEY: 'NO / EN EVALUACIÓN',
+      BELLET: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
+      IMU: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
+      BOLDO: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
+      NATIVO: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
+      URBANA: '2,5 rentas líquidas (sin complemento), Sin Aval (medida temporal)'
+    } },
+    { label: 'Complemento Renta', values: {
+      SOHO: 'Titular 2,5 rentas + complemento total 4,0 veces arriendo, con Aval. Complemento debe ser residente.',
+      SPOT: 'Titular 2,5 rentas + complemento total 4,0 veces arriendo, con Aval. Complemento debe ser residente.',
+      BOLDO: 'Titular 2,5 rentas + complemento total 4,0 veces arriendo, con Aval. Complemento debe ser residente.',
+      BROOKLYN: 'Titular 2,5 rentas + complemento total 4,0 veces arriendo, con Aval. Complemento debe ser residente.',
+      RESIDENCE: 'Titular 2,5 rentas + complemento total 4,0 veces arriendo, con Aval. Complemento debe ser residente.',
+      PARK: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      CENTRAL: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      HOLLEY: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      BELLET: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      IMU: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      NATIVO: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      URBANA: 'Titular 2,0 rentas + complemento total 3,0 veces arriendo, con Aval (medida temporal). Complemento debe ser residente.',
+      COLLECTIVE: 'SI — Titular 2x renta depto + total 3x renta depto'
+    } }
+  ],
+  dependientes: [
+    { label: 'Liquidaciones Sueldo (fijo)', values: { all: '3 últimas liquidaciones', COLLECTIVE: '3 últimas' } },
+    { label: 'Liquidaciones Sueldo (variable)', values: { all: '6 últimas liquidaciones', COLLECTIVE: '6 últimas' } },
+    { label: 'Contrato o Carta Empleador', values: { all: 'Copia de Contrato o Certificado laboral', COLLECTIVE: 'SI' } },
+    { label: 'Certificado Cotización AFP', values: { all: 'Últimos 12 meses', COLLECTIVE: 'Últimos 12 meses' } }
+  ],
+  independientes: [
+    { label: 'Carpeta Tributaria / Formularios', values: { all: 'Carpeta Tributaria último año y Formulario F22', COLLECTIVE: 'Último año y formulario 29' } },
+    { label: 'Boletas Honorarios', values: { all: '3 últimos meses (6 si variación >50% entre meses)', COLLECTIVE: '—' } },
+    { label: 'Pago Provisional Mensual', values: { all: 'SI', COLLECTIVE: '—' } },
+    { label: 'Certificado Inicio Actividades', values: { all: 'SI', COLLECTIVE: '—' } },
+    { label: 'Declaración Anual SII', values: { all: 'SI', COLLECTIVE: '—' } },
+    { label: 'Otros Ingresos', values: { all: 'Pago Adelantado 12 Meses', COLLECTIVE: '—' } }
+  ],
+  juridica: [
+    { label: 'Constitución de Sociedad', values: { all: 'Constitución de Sociedad Vigente', COLLECTIVE: 'Vigente' } },
+    { label: 'Representante Legal', values: { all: 'Acreditación R.L Vigente', COLLECTIVE: 'Constitución y sus modificaciones' } },
+    { label: 'Carpeta Tributaria / Formularios', values: { all: 'Carpeta Tributaria último año y Formulario F22', COLLECTIVE: 'Carpeta tributaria electrónica último año y Formulario 29' } },
+    { label: 'Dirección Comercial', values: { all: 'Acreditación Dirección Comercial', COLLECTIVE: 'Certificado de domicilio' } },
+    { label: 'Renta requerida titular (Jurídica)', values: {
+      SOHO: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      PARK: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      CENTRAL: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      BOLDO: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      SPOT: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      HOLLEY: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      BELLET: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      IMU: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      BROOKLYN: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      NATIVO: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      RESIDENCE: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      URBANA: 'Mín 6 últimas bases imponibles al 50%, mín 6 veces valor arriendo + Aval. Si R.L. es titular/residente: 4 rentas adicionales',
+      COLLECTIVE: '4 x renta del depto (sin complemento de renta)'
+    } },
+    { label: 'Acreditación Bancaria', values: { all: 'Cuenta Bancaria y RUT de la empresa', COLLECTIVE: 'Certificado cuenta bancaria y RUT empresa actualizado' } },
+    { label: 'DICOM Empresa', values: { all: '—', COLLECTIVE: 'Equifax empresa Calificación 999' } },
+    { label: 'DICOM Representante Legal', values: { all: '—', COLLECTIVE: 'Equifax R.L. Calificación 999' } }
+  ],
+  aval: [
+    { label: 'Aval', values: { all: 'SI (Dependiente, Independiente, Jurídica). Excepciones por Canal de Consulta.', COLLECTIVE: 'Requerido — Exime sobre 5x renta depto / 1 garantía' } },
+    { label: 'Documentos Aval', values: { all: 'Mismo del titular + Renta 3 veces valor arriendo', COLLECTIVE: 'Mismo del titular' } },
+    { label: 'Garantía Departamento', values: { all: '1 mes de Arriendo', COLLECTIVE: '1x renta depto (con aval) / 2x renta depto (sin aval)' } },
+    { label: 'Garantía Mascotas', values: {
+      SOHO: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      PARK: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      CENTRAL: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      BOLDO: 'UF 3 (máx 2 mascotas, hasta 15kg)',
+      SPOT: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      HOLLEY: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      BELLET: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      IMU: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      BROOKLYN: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      NATIVO: 'UF 5 (máx 2 mascotas, hasta 15kg)',
+      RESIDENCE: '50% de un mes de arriendo (máx 2 mascotas, hasta 15kg)',
+      URBANA: 'UF 3 (máx 2 mascotas, hasta 15kg)',
+      COLLECTIVE: 'Consultar canal específico'
+    } }
+  ],
+  extras: [
+    { label: 'Reserva', values: { all: '$50.000', COLLECTIVE: 'Consultar' } },
+    { label: 'Evaluación Infocheck', values: { all: 'SI', COLLECTIVE: 'SI' } },
+    { label: 'Comisión Corretaje', values: { all: '50% Valor de Arriendo + IVA', COLLECTIVE: 'Consultar' } }
+  ]
+};
 
-  // Forecast por mes (Fecha Declarada Ingreso, próximos 120 días)
-  const FORECAST_MES = {
-    labels: ["May 2026", "Jun 2026", "Jul 2026", "Ago 2026"],
-    total:  [42, 11, 1, 0],
-  };
-
-  const PROPIEDADES = PROPIEDADES_RAW.map(p => ({
-    ...p,
-    real: p.arrendados / p.unidades,
-    pres: META_OCUPACION_DEFAULT,
-    com: COMERCIAL[p.nombre],
-  }));
-
-  // ----- Helpers -----
-  function semaforo(real, pres) {
-    const d = real - pres;
-    if (d >= 0) return "green";
-    if (d >= -0.02) return "yellow";
-    return "red";
+const collectiveProfiles = {
+  dependiente: {
+    title: '👔 Persona Natural Dependiente',
+    items: [
+      { label: 'Renta requerida titular', value: '2,5 x renta del departamento' },
+      { label: 'Complemento renta', value: 'SI — Titular con 2x renta depto + total 3x renta depto' },
+      { label: 'Fotocopia CI', value: 'SI (ambos lados)' },
+      { label: 'Liquidaciones (sueldo fijo)', value: '3 últimas' },
+      { label: 'Liquidaciones (sueldo variable)', value: '6 últimas' },
+      { label: 'Carpeta tributaria', value: 'N/A' },
+      { label: 'Contrato o certificado de trabajo', value: 'SI' },
+      { label: 'Certificado AFP', value: 'Últimos 12 meses' },
+      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
+      { label: 'Garantía (con aval)', value: '1 x renta depto' },
+      { label: 'Garantía (sin aval)', value: '2 x renta depto' },
+      { label: 'Exime aval', value: 'Titular sobre 5x renta depto / 1 garantía' }
+    ]
+  },
+  independiente: {
+    title: '🧑‍💻 Persona Natural Independiente (boletea)',
+    items: [
+      { label: 'Renta requerida titular', value: '2,5 x la renta del depto' },
+      { label: 'Complemento renta', value: 'SI — Titular con 2x renta depto + total 3x renta depto' },
+      { label: 'Fotocopia CI', value: 'SI (ambos lados)' },
+      { label: 'Liquidaciones (sueldo fijo)', value: 'N/A' },
+      { label: 'Liquidaciones (sueldo variable)', value: 'N/A' },
+      { label: 'Carpeta tributaria', value: 'Último año y formulario 29' },
+      { label: 'Contrato o certificado de trabajo', value: 'N/A' },
+      { label: 'Certificado AFP', value: 'N/A' },
+      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
+      { label: 'Garantía (con aval)', value: '1 x renta depto' },
+      { label: 'Garantía (sin aval)', value: '2 x renta depto' },
+      { label: 'Exime aval', value: 'Titular sobre 5x renta depto / 1 garantía' }
+    ]
+  },
+  juridica: {
+    title: '🏢 Persona Jurídica (Empresa)',
+    items: [
+      { label: 'Renta requerida titular', value: '4 x renta del depto' },
+      { label: 'Complemento renta', value: 'NO' },
+      { label: 'Certificado constitución de sociedad', value: 'Vigente' },
+      { label: 'Acreditación R.L. vigente', value: 'Constitución y sus modificaciones' },
+      { label: 'Carpeta tributaria electrónica y formulario 29', value: 'Último año' },
+      { label: 'Acreditación dirección comercial', value: 'Certificado de domicilio' },
+      { label: 'Cuenta bancaria y RUT empresa', value: 'Actualizado' },
+      { label: 'DICOM Equifax empresa', value: 'Calificación 999' },
+      { label: 'DICOM Equifax Representante Legal', value: 'Calificación 999' }
+    ]
+  },
+  especial: {
+    title: '👵 Casos Especiales (Tercera Edad y Estudiantes)',
+    items: [
+      { label: 'Renta requerida titular', value: '3 x renta del depto (siempre con aval)' },
+      { label: 'Complemento renta', value: 'NO' },
+      { label: 'Residente', value: 'Debe ser con relación sanguínea' },
+      { label: 'Fotocopia CI', value: 'Ambos lados' },
+      { label: 'Liquidaciones (sueldo fijo)', value: '3 últimas' },
+      { label: 'Liquidaciones (sueldo variable)', value: '6 últimas' },
+      { label: 'Contrato o certificado de trabajo', value: 'SI' },
+      { label: 'Certificado AFP', value: 'Últimos 12 meses' },
+      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
+      { label: 'Garantía (con aval)', value: '1 x renta depto' },
+      { label: 'Garantía (sin aval)', value: 'N/A' },
+      { label: 'Exime aval', value: 'Titular sobre 5x renta depto / 1 garantía' }
+    ]
   }
-  function pct(x) { return (x * 100).toFixed(1) + "%"; }
-  function pp(x)  { return (x >= 0 ? "+" : "") + (x * 100).toFixed(1) + " pp"; }
-  function fmtNum(x) { return x.toLocaleString("es-CL"); }
+};
 
-  function agregados(props) {
-    const totalUnidades = props.reduce((s, p) => s + p.unidades, 0);
-    const totalArrendados = props.reduce((s, p) => s + p.arrendados, 0);
-    const totalDisponibles = props.reduce((s, p) => s + p.disponibles, 0);
-    const totalNoDisp = props.reduce((s, p) => s + p.noDisp, 0);
-    const ocupRealW = totalArrendados / totalUnidades;
-    const ocupPresW = props.reduce((s, p) => s + p.pres * p.unidades, 0) / totalUnidades;
-    const totalPorRenovar = props.reduce((s, p) => s + p.porRenovar, 0);
-    const totalPipeline = props.reduce((s, p) => s + p.com.pipeline, 0);
-    const totalRes30d = props.reduce((s, p) => s + p.com.res30dTotal, 0);
-    const totalRes30dOk = props.reduce((s, p) => s + p.com.res30dOk, 0);
-    const totalRes30dFuga = props.reduce((s, p) => s + p.com.res30dFuga, 0);
-    const totalContratos = props.reduce((s, p) => s + p.com.contratosMes, 0);
-    const totalForecast = props.reduce((s, p) => s + p.com.forecast120d, 0);
-    return {
-      totalUnidades, totalArrendados, totalDisponibles, totalNoDisp,
-      ocupRealW, ocupPresW, totalPorRenovar,
-      totalPipeline, totalRes30d, totalRes30dOk, totalRes30dFuga,
-      totalContratos, totalForecast,
-    };
-  }
+const promotions = [
+  { name: '1 mes de arriendo gratis x contrato 12 meses', icon: '🎉',
+    values: { SOHO: 'NO', PARK: 'SI', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'SI', COLLECTIVE: 'SI' } },
+  { name: '½ mes de arriendo gratis x contrato 12 meses', icon: '🎊',
+    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: '$200.000 descuento campaña referidos', icon: '💰',
+    values: { SOHO: 'SI', PARK: 'SI', CENTRAL: 'SI', BOLDO: 'SI', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'SI', NATIVO: 'EVAL', RESIDENCE: 'EVAL', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: '$100.000 descuento campaña referidos + 1 quincho', icon: '🎁',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'SI' } },
+  { name: 'Garantía hasta en 3 cuotas', icon: '💳',
+    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: 'Bodega gratis 6 primeros meses x contrato 12 meses', icon: '📦',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: 'Segundo estacionamiento gratis x 12 meses', icon: '🚗',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'SI', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: '3 meses estacionamiento gratis x contrato 12 meses', icon: '🅿️',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: 'Empresas: 2 meses arriendo gratis dividido en 3 (con convenio)', icon: '🏢',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'EVAL', SPOT: 'NO', HOLLEY: 'SI', BELLET: 'SI', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: 'Gastos comunes 50% descuento', icon: '🧾',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } }
+];
 
-  function render() {
-    document.getElementById("month-pill").textContent = MES_ACTUAL;
+// Display names para proyectos (algunos cambian de nombre comercial)
+const projectDisplayNames = {
+  SPOT: 'SPOT NUEVA KENNEDY',
+  URBANA: 'BLEND'
+};
 
-    const agg = agregados(PROPIEDADES);
-    const semGlobal = semaforo(agg.ocupRealW, agg.ocupPresW);
-    const tasaFuga = agg.totalRes30d > 0 ? agg.totalRes30dFuga / agg.totalRes30d : 0;
-    const tasaOk = agg.totalRes30d > 0 ? agg.totalRes30dOk / agg.totalRes30d : 0;
-    const semFuga = tasaFuga <= 0.15 ? "green" : (tasaFuga <= 0.25 ? "yellow" : "red");
+// Notas especiales por proyecto
+const projectNotes = {
+  BROOKLYN: '⚠️ Las promociones no son acumulativas.'
+};
 
-    // ----- KPIs Ocupación -----
-    const kpisOcup = [
-      { label: "Ocupación real", value: pct(agg.ocupRealW),
-        delta: fmtNum(agg.totalArrendados) + " de " + fmtNum(agg.totalUnidades) + " deptos arrendados",
-        sem: semGlobal },
-      { label: "Meta de ocupación", value: pct(agg.ocupPresW),
-        delta: "Placeholder — pendiente cargar presupuesto real", sem: "yellow" },
-      { label: "Variación vs meta", value: pp(agg.ocupRealW - agg.ocupPresW),
-        delta: semGlobal === "green" ? "Sobre meta" : (semGlobal === "yellow" ? "Levemente bajo meta" : "Bajo meta significativo"),
-        sem: semGlobal },
-      { label: "Próximas renovaciones", value: fmtNum(agg.totalPorRenovar),
-        delta: fmtNum(agg.totalDisponibles) + " disponibles para arriendo", sem: "neutral" },
-    ];
-    document.getElementById("kpi-grid-ocup").innerHTML = kpisOcup.map(k => `
-      <div class="kpi ${k.sem}"><div class="badge"></div>
-        <div class="label">${k.label}</div>
-        <div class="value">${k.value}</div>
-        <div class="delta">${k.delta}</div>
+let currentProject = 'SOHO';
+let currentCategory = 'all';
+let currentMode = 'detail';
+let currentProfile = 'dependiente';
+
+const projectGrid = document.getElementById('projectGrid');
+projects.forEach(p => {
+  const btn = document.createElement('button');
+  const isCollective = p === 'COLLECTIVE';
+  const displayName = projectDisplayNames[p] || p;
+  btn.className = 'project-btn' + (p === currentProject ? ' active' : '') + (isCollective ? ' collective' : '');
+  btn.innerHTML = displayName + (isCollective ? '<span class="badge-new">NUEVO</span>' : '');
+  btn.onclick = () => {
+    currentProject = p;
+    document.querySelectorAll('.project-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDetail();
+  };
+  projectGrid.appendChild(btn);
+});
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMode = btn.dataset.mode;
+    document.getElementById('detailMode').classList.toggle('hidden', currentMode !== 'detail');
+    document.getElementById('compareMode').classList.toggle('hidden', currentMode !== 'compare');
+    document.getElementById('promosMode').classList.toggle('hidden', currentMode !== 'promos');
+    if (currentMode === 'compare') renderCompare();
+    if (currentMode === 'promos') renderPromos();
+  };
+});
+
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentCategory = tab.dataset.cat;
+    renderDetail();
+  };
+});
+
+const categoryConfig = {
+  todos: { title: 'Documentos Generales', icon: '📄' },
+  dependientes: { title: 'Trabajadores Dependientes', icon: '💼' },
+  independientes: { title: 'Trabajadores Independientes', icon: '🧑‍💻' },
+  juridica: { title: 'Persona Jurídica', icon: '🏢' },
+  aval: { title: 'Aval y Garantías', icon: '🛡️' },
+  extras: { title: 'Reserva, Evaluación y Comisión', icon: '⚡' }
+};
+
+function getValue(req, project) {
+  if (req.values[project] !== undefined) return req.values[project];
+  if (req.values.all) return req.values.all;
+  return '—';
+}
+
+function renderCollectiveDetail() {
+  const view = document.getElementById('detailView');
+  let html = `
+    <div class="project-header">
+      <div class="project-icon collective">C</div>
+      <div>
+        <div class="project-name">COLLECTIVE Bustamante <span class="project-tag">CONDICIONES BST</span></div>
+        <div style="color:#94a3b8;font-size:0.9rem">Versión 1 · Última actualización: 05 marzo 2026</div>
       </div>
-    `).join("");
-
-    // ----- KPIs Comerciales -----
-    const kpisCom = [
-      { label: "Pipeline activo", value: fmtNum(agg.totalPipeline),
-        delta: "Reservas Creadas + Pagadas a confirmar", sem: "neutral" },
-      { label: "Reservas últimos 30 días", value: fmtNum(agg.totalRes30d),
-        delta: agg.totalRes30dOk + " avanzando · " + agg.totalRes30dFuga + " caídas",
-        sem: "neutral" },
-      { label: "Tasa de fuga 30d", value: pct(tasaFuga),
-        delta: pct(tasaOk) + " avance · " + (tasaFuga <= 0.15 ? "Saludable" : (tasaFuga <= 0.25 ? "Vigilar" : "Crítica")),
-        sem: semFuga },
-      { label: "Contratos firmados (mayo)", value: fmtNum(agg.totalContratos),
-        delta: "Inicio de contrato en mayo 2026", sem: "neutral" },
-    ];
-    document.getElementById("kpi-grid-com").innerHTML = kpisCom.map(k => `
-      <div class="kpi ${k.sem}"><div class="badge"></div>
-        <div class="label">${k.label}</div>
-        <div class="value">${k.value}</div>
-        <div class="delta">${k.delta}</div>
-      </div>
-    `).join("");
-
-    // ----- Resumen ejecutivo integrado -----
-    const peores = [...PROPIEDADES].sort((a,b) => (a.real-a.pres) - (b.real-b.pres)).slice(0, 3);
-    const verdes = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "green").length;
-    const amarillas = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "yellow").length;
-    const rojas = PROPIEDADES.filter(p => semaforo(p.real, p.pres) === "red").length;
-
-    // Top propiedades por actividad comercial
-    const topAct = [...PROPIEDADES].sort((a,b) => b.com.res30dTotal - a.com.res30dTotal).slice(0, 3);
-    const topPipeline = [...PROPIEDADES].sort((a,b) => b.com.pipeline - a.com.pipeline).slice(0, 3);
-    // Propiedades con fuga preocupante
-    const topFuga = PROPIEDADES.filter(p => p.com.res30dTotal >= 5)
-      .sort((a,b) => (b.com.res30dFuga/b.com.res30dTotal) - (a.com.res30dFuga/a.com.res30dTotal))[0];
-
-    document.getElementById("exec-summary").innerHTML = `
-      <p><strong>Ocupación.</strong> El portafolio LAR Group cierra el snapshot del 3-may con <strong>${fmtNum(agg.totalArrendados)} de ${fmtNum(agg.totalUnidades)}</strong> departamentos arrendados — ocupación ponderada de <strong>${pct(agg.ocupRealW)}</strong>, <strong>${pp(agg.ocupRealW - agg.ocupPresW)}</strong> respecto a la meta del ${pct(agg.ocupPresW)}. ${verdes} propiedades en verde, ${amarillas} en amarillo y <strong>${rojas} en rojo</strong>; foco en <strong>${peores[0].nombre}</strong> (${pct(peores[0].real)}), <strong>${peores[1].nombre}</strong> (${pct(peores[1].real)}) y <strong>${peores[2].nombre}</strong> (${pct(peores[2].real)}).</p>
-      <p><strong>Pipeline comercial.</strong> Hay <strong>${fmtNum(agg.totalPipeline)} reservas activas</strong> en el embudo (Creadas + Pagadas), concentradas en <strong>${topPipeline[0].nombre}</strong> (${topPipeline[0].com.pipeline}), <strong>${topPipeline[1].nombre}</strong> (${topPipeline[1].com.pipeline}) y <strong>${topPipeline[2].nombre}</strong> (${topPipeline[2].com.pipeline}). En los últimos 30 días entraron <strong>${agg.totalRes30d} reservas</strong> con tasa de avance del <strong>${pct(tasaOk)}</strong> y fuga del <strong>${pct(tasaFuga)}</strong>${topFuga ? ` — la propiedad con peor desempeño relativo es <strong>${topFuga.nombre}</strong> (${pct(topFuga.com.res30dFuga/topFuga.com.res30dTotal)} de fuga)` : ""}. Las más activas son ${topAct.map(p => `<strong>${p.nombre}</strong> (${p.com.res30dTotal})`).join(", ")}.</p>
-      <p><strong>Forecast 120 días.</strong> Hay <strong>${fmtNum(agg.totalForecast)} reservas activas con fecha de ingreso comprometida</strong> en los próximos 4 meses — ${FORECAST_MES.total[0]} en mayo, ${FORECAST_MES.total[1]} en junio, ${FORECAST_MES.total[2]} en julio. Si todas se materializan, suben la ocupación del portafolio al <strong>${pct((agg.totalArrendados + agg.totalForecast) / agg.totalUnidades)}</strong>. Este mes ya se firmaron <strong>${agg.totalContratos} contratos</strong> con inicio en mayo, principalmente en Central Santiago (12), Brooklyn La Florida (11), Spot Residence (6) y Spot Nueva Kennedy (6).</p>
+    </div>
+  `;
+  
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  
+  // PROMOCIONES PRIMERO en COLLECTIVE
+  const collPromos = promotions.filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm));
+  if (collPromos.length > 0) {
+    const availableCount = collPromos.filter(p => p.values.COLLECTIVE === 'SI').length;
+    const evalCount = collPromos.filter(p => p.values.COLLECTIVE === 'EVAL').length;
+    
+    html += `
+      <h3 class="section-title">
+        🎁 Promociones Disponibles
+        <span style="margin-left:auto;font-size:0.8rem;font-weight:500;color:#94a3b8">
+          <span style="color:var(--lar-accent-light)">${availableCount} activas</span>
+          ${evalCount > 0 ? ` · <span style="color:#fbbf24">${evalCount} en evaluación</span>` : ''}
+        </span>
+      </h3>
+      <div class="promo-grid">
     `;
-
-    // ----- Tabla por propiedad -----
-    const tbody = document.getElementById("properties-tbody");
-    tbody.innerHTML = "";
-    const ordenadas = [...PROPIEDADES].sort((a, b) => (a.real - a.pres) - (b.real - b.pres));
-    ordenadas.forEach(p => {
-      const sem = semaforo(p.real, p.pres);
-      const dPP = pp(p.real - p.pres);
-      const semLabel = sem === "green" ? "Sobre meta" : (sem === "yellow" ? "Cerca de meta" : "Bajo meta");
-      const c = p.com;
-      const okFuga = c.res30dTotal > 0
-        ? `<span class="ok-fuga"><span class="ok">${c.res30dOk}↑</span><span class="sep">·</span><span class="fuga">${c.res30dFuga}↓</span> <span style="color:#5A6478">(${c.res30dTotal})</span></span>`
-        : `<span style="color:#B0B6C2">—</span>`;
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${p.nombre}</td>
-        <td class="num">${fmtNum(p.unidades)}</td>
-        <td class="num">${pct(p.real)}</td>
-        <td class="num delta-cell ${sem}">${dPP}</td>
-        <td class="num">${fmtNum(p.disponibles)}</td>
-        <td class="num">${c.pipeline > 0 ? fmtNum(c.pipeline) : "—"}</td>
-        <td class="num">${okFuga}</td>
-        <td class="num">${c.contratosMes > 0 ? fmtNum(c.contratosMes) : "—"}</td>
-        <td class="num">${c.forecast120d > 0 ? fmtNum(c.forecast120d) : "—"}</td>
-        <td><span class="pill ${sem}">${semLabel}</span></td>
+    collPromos.forEach(promo => {
+      const status = promo.values.COLLECTIVE;
+      const cls = status === 'SI' ? 'promo-yes' : status === 'EVAL' ? 'promo-eval' : 'promo-no';
+      const statusCls = status === 'SI' ? 'status-yes' : status === 'EVAL' ? 'status-eval' : 'status-no';
+      const statusText = status === 'SI' ? '✓ DISPONIBLE' : status === 'EVAL' ? '⏳ EN EVALUACIÓN' : '✗ NO DISPONIBLE';
+      html += `
+        <div class="promo-card ${cls}">
+          <span class="promo-status ${statusCls}">${statusText}</span>
+          <div class="promo-text">${promo.icon} ${promo.name}</div>
+        </div>
       `;
-      tbody.appendChild(row);
     });
-
-    // ----- Forecast chart -----
-    const ctxF = document.getElementById("forecast-chart").getContext("2d");
-    new Chart(ctxF, {
-      type: "bar",
-      data: {
-        labels: FORECAST_MES.labels,
-        datasets: [{
-          label: "Ingresos esperados",
-          data: FORECAST_MES.total,
-          backgroundColor: ["#2E5A87", "#4A7BAB", "#6B98C0", "#8FB6D4"],
-          borderRadius: 6,
-          maxBarThickness: 60,
-        }],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: c => fmtNum(c.parsed.y) + " ingresos" } },
-        },
-        scales: {
-          y: { beginAtZero: true, ticks: { font: { size: 11 } }, grid: { color: "#EDEFF4" } },
-          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
-        },
-      },
-    });
-    document.getElementById("forecast-legend").innerHTML = `
-      <strong>${fmtNum(agg.totalForecast)}</strong> reservas activas con fecha declarada de ingreso entre el 3-may y el 31-ago. La concentración en mayo refleja contratos próximos a iniciar; la cola corta para julio-agosto sugiere oportunidad de adelantar gestión comercial para llenar esos meses.
-    `;
-
-    // ----- Donut chart -----
-    const ctxD = document.getElementById("donut-chart").getContext("2d");
-    new Chart(ctxD, {
-      type: "doughnut",
-      data: {
-        labels: ["Arrendados", "Disponibles", "No disponibles"],
-        datasets: [{
-          data: [agg.totalArrendados, agg.totalDisponibles, agg.totalNoDisp],
-          backgroundColor: ["#2D8A4E", "#E0A82E", "#B23A3A"],
-          borderColor: "#fff", borderWidth: 2,
-        }],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false, cutout: "62%",
-        plugins: {
-          legend: { position: "bottom", labels: { font: { size: 11 }, padding: 12 } },
-          tooltip: {
-            callbacks: {
-              label: c => c.label + ": " + fmtNum(c.parsed) + " (" + (c.parsed / agg.totalUnidades * 100).toFixed(1) + "%)",
-            },
-          },
-        },
-      },
-    });
-    document.getElementById("donut-legend").innerHTML = `
-      <strong>${fmtNum(agg.totalUnidades)}</strong> departamentos en 12 propiedades. ${fmtNum(agg.totalDisponibles)} listos para nuevo arriendo, ${fmtNum(agg.totalNoDisp)} fuera de stock (mantención, reservadas, en obra).
-    `;
+    html += '</div>';
   }
+  
+  // Luego, info banner + selector de perfiles + requisitos
+  html += `
+    <div class="info-banner" style="margin-top:25px">
+      ℹ️ <strong>Collective Bustamante</strong> opera con condiciones comerciales propias diferenciadas del resto de proyectos LAR. Selecciona el perfil del arrendatario:
+    </div>
+    <div class="profile-tabs">
+      <button class="profile-tab ${currentProfile==='dependiente'?'active':''}" data-profile="dependiente">👔 Dependiente</button>
+      <button class="profile-tab ${currentProfile==='independiente'?'active':''}" data-profile="independiente">🧑‍💻 Independiente</button>
+      <button class="profile-tab ${currentProfile==='juridica'?'active':''}" data-profile="juridica">🏢 Jurídica</button>
+      <button class="profile-tab ${currentProfile==='especial'?'active':''}" data-profile="especial">👵 Casos Especiales</button>
+    </div>
+  `;
+  
+  const profile = collectiveProfiles[currentProfile];
+  const items = profile.items.filter(i => 
+    !searchTerm || i.label.toLowerCase().includes(searchTerm) || i.value.toLowerCase().includes(searchTerm)
+  );
+  
+  html += `<h3 class="section-title">${profile.title}</h3><div class="req-grid">`;
+  items.forEach(item => {
+    let displayVal = item.value;
+    if (item.value === 'SI') displayVal = '<span class="badge badge-yes">✓ SI</span>';
+    else if (item.value === 'NO') displayVal = '<span class="badge badge-no">✗ NO</span>';
+    else if (item.value === 'N/A') displayVal = '<span class="badge badge-no">N/A</span>';
+    html += `
+      <div class="req-item" style="border-left-color:var(--lar-accent-light)">
+        <div class="req-label" style="color:var(--lar-accent-light)">${item.label}</div>
+        <div class="req-value">${displayVal}</div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  
+  view.innerHTML = html;
+  
+  document.querySelectorAll('.profile-tab').forEach(tab => {
+    tab.onclick = () => {
+      currentProfile = tab.dataset.profile;
+      renderCollectiveDetail();
+    };
+  });
+}
 
-  document.addEventListener("DOMContentLoaded", render);
+function renderDetail() {
+  if (currentProject === 'COLLECTIVE') {
+    renderCollectiveDetail();
+    return;
+  }
+  
+  const view = document.getElementById('detailView');
+  const initial = currentProject.charAt(0);
+  const displayName = projectDisplayNames[currentProject] || currentProject;
+  const subtitle = projectDisplayNames[currentProject] 
+    ? `Antes: ${currentProject} · Requisitos y condiciones del proyecto` 
+    : 'Requisitos y condiciones del proyecto';
+  let html = `
+    <div class="project-header">
+      <div class="project-icon">${initial}</div>
+      <div>
+        <div class="project-name">${displayName}</div>
+        <div style="color:#94a3b8;font-size:0.9rem">${subtitle}</div>
+      </div>
+    </div>
+  `;
+  
+  const cats = currentCategory === 'all' ? Object.keys(requirements) : [currentCategory];
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  
+  // PROMOCIONES PRIMERO (siempre visibles excepto cuando hay un filtro de categoría que las excluye)
+  if (currentCategory === 'all' || currentCategory === 'extras') {
+    const projectPromos = promotions.filter(p => {
+      if (!searchTerm) return true;
+      return p.name.toLowerCase().includes(searchTerm);
+    });
+    if (projectPromos.length > 0) {
+      // Contador de promos disponibles
+      const availableCount = projectPromos.filter(p => p.values[currentProject] === 'SI').length;
+      const evalCount = projectPromos.filter(p => p.values[currentProject] === 'EVAL').length;
+      
+      html += `
+        <h3 class="section-title">
+          🎁 Promociones Disponibles 
+          <span style="margin-left:auto;font-size:0.8rem;font-weight:500;color:#94a3b8">
+            <span style="color:var(--lar-accent-light)">${availableCount} activas</span>
+            ${evalCount > 0 ? ` · <span style="color:#fbbf24">${evalCount} en evaluación</span>` : ''}
+          </span>
+        </h3>
+      `;
+      
+      // Glosa especial del proyecto (ej. Brooklyn: no acumulables)
+      if (projectNotes[currentProject]) {
+        html += `
+          <div style="background:linear-gradient(90deg, rgba(234,179,8,0.15), rgba(234,179,8,0.05));
+                      border-left:3px solid #eab308; padding:10px 14px; border-radius:8px;
+                      margin-bottom:14px; font-size:0.85rem; color:#fde68a">
+            ${projectNotes[currentProject]}
+          </div>
+        `;
+      }
+      
+      html += '<div class="promo-grid">';
+      projectPromos.forEach(promo => {
+        const status = promo.values[currentProject];
+        const cls = status === 'SI' ? 'promo-yes' : status === 'EVAL' ? 'promo-eval' : 'promo-no';
+        const statusCls = status === 'SI' ? 'status-yes' : status === 'EVAL' ? 'status-eval' : 'status-no';
+        const statusText = status === 'SI' ? '✓ DISPONIBLE' : status === 'EVAL' ? '⏳ EN EVALUACIÓN' : '✗ NO DISPONIBLE';
+        html += `
+          <div class="promo-card ${cls}">
+            <span class="promo-status ${statusCls}">${statusText}</span>
+            <div class="promo-text">${promo.icon} ${promo.name}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+    }
+  }
+  
+  // Luego los requisitos por categoría
+  cats.forEach(cat => {
+    const cfg = categoryConfig[cat];
+    const items = requirements[cat].filter(r => {
+      if (!searchTerm) return true;
+      const val = getValue(r, currentProject).toLowerCase();
+      return r.label.toLowerCase().includes(searchTerm) || val.includes(searchTerm);
+    });
+    if (items.length === 0) return;
+    
+    html += `<h3 class="section-title">${cfg.icon} ${cfg.title}</h3><div class="req-grid">`;
+    items.forEach(req => {
+      const val = getValue(req, currentProject);
+      if (val === '—') return;
+      const isYes = val === 'SI';
+      const isNo = val === 'No' || val === 'NO';
+      const isEval = val.includes('EVALUACIÓN');
+      let displayVal = val;
+      if (isYes) displayVal = '<span class="badge badge-yes">✓ SI</span>';
+      else if (isNo) displayVal = '<span class="badge badge-no">✗ NO</span>';
+      else if (isEval) displayVal = '<span class="badge badge-eval">⏳ EN EVALUACIÓN</span>';
+      
+      html += `
+        <div class="req-item">
+          <div class="req-label">${req.label}</div>
+          <div class="req-value">${displayVal}${req.note ? `<div style="color:#94a3b8;font-size:0.8rem;margin-top:4px;font-style:italic">ℹ️ ${req.note}</div>` : ''}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+  });
+  
+  view.innerHTML = html;
+}
+
+function renderCompare() {
+  const table = document.getElementById('compareTable');
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  
+  let html = '<thead><tr><th>Requisito</th>';
+  projects.forEach(p => {
+    const cls = p === 'COLLECTIVE' ? 'collective-col' : '';
+    const name = projectDisplayNames[p] || p;
+    html += `<th class="${cls}">${name}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  
+  Object.keys(requirements).forEach(cat => {
+    const cfg = categoryConfig[cat];
+    const filtered = requirements[cat].filter(r => {
+      if (!searchTerm) return true;
+      return r.label.toLowerCase().includes(searchTerm);
+    });
+    if (filtered.length === 0) return;
+    
+    html += `<tr><td colspan="${projects.length+1}" style="background:rgba(98,171,188,0.18);color:var(--lar-accent-light);text-align:center;font-weight:700;padding:12px">${cfg.icon} ${cfg.title.toUpperCase()}</td></tr>`;
+    
+    filtered.forEach(req => {
+      html += `<tr><td>${req.label}</td>`;
+      projects.forEach(p => {
+        const val = getValue(req, p);
+        let cellClass = '';
+        let display = val;
+        if (val === 'SI') { cellClass = 'cell-yes'; display = '✓'; }
+        else if (val === 'No' || val === 'NO') { cellClass = 'cell-no'; display = '✗'; }
+        else if (val.includes('EVALUACIÓN')) { cellClass = 'cell-eval'; display = '⏳'; }
+        else if (val === '—') { display = '<span style="color:#475569">—</span>'; }
+        else if (val === 'N/A') { cellClass = 'cell-no'; display = 'N/A'; }
+        else display = `<span style="font-size:0.75rem;color:#cbd5e1">${val.length > 60 ? val.substring(0,60)+'...' : val}</span>`;
+        html += `<td class="${cellClass}" title="${val.replace(/"/g,'&quot;')}">${display}</td>`;
+      });
+      html += '</tr>';
+    });
+  });
+  
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function renderPromos() {
+  const table = document.getElementById('promosTable');
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  
+  let html = '<thead><tr><th>Promoción</th>';
+  projects.forEach(p => {
+    const cls = p === 'COLLECTIVE' ? 'collective-col' : '';
+    const name = projectDisplayNames[p] || p;
+    html += `<th class="${cls}">${name}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+  
+  promotions.filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm)).forEach(promo => {
+    html += `<tr><td>${promo.icon} ${promo.name}</td>`;
+    projects.forEach(p => {
+      const v = promo.values[p];
+      const cls = v === 'SI' ? 'cell-yes' : v === 'EVAL' ? 'cell-eval' : 'cell-no';
+      const sym = v === 'SI' ? '✓' : v === 'EVAL' ? '⏳' : '✗';
+      const tip = v === 'EVAL' ? 'En Evaluación' : v === 'SI' ? 'Disponible' : 'No Disponible';
+      html += `<td class="${cls}" title="${tip}">${sym}</td>`;
+    });
+    html += '</tr>';
+  });
+  
+  html += `<tr style="background:rgba(98,171,188,0.18)"><td style="font-weight:700;color:var(--lar-accent-light)">📊 Total promos disponibles</td>`;
+  projects.forEach(p => {
+    const count = promotions.filter(promo => promo.values[p] === 'SI').length;
+    html += `<td style="font-weight:700;color:var(--lar-accent-light);font-size:1.1rem">${count}/${promotions.length}</td>`;
+  });
+  html += '</tr>';
+  
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+document.getElementById('search').addEventListener('input', () => {
+  if (currentMode === 'detail') renderDetail();
+  else if (currentMode === 'compare') renderCompare();
+  else if (currentMode === 'promos') renderPromos();
+});
+
+renderDetail();
 </script>
 </body>
 </html>
