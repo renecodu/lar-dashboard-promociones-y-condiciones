@@ -569,19 +569,21 @@ const promotions = [
   { name: '1 mes de arriendo gratis x contrato 12 meses', icon: '🎉',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'SI', COLLECTIVE: 'SI' } },
   { name: '½ mes de arriendo gratis x contrato 12 meses', icon: '🎊',
-    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'SI', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: '$200.000 descuento campaña referidos', icon: '💰',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: '$100.000 descuento campaña referidos + 1 quincho', icon: '🎁',
-    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'SI' } },
   { name: 'Garantía hasta en 3 cuotas', icon: '💳',
     values: { SOHO: 'SI', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'SI', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'SI' } },
   { name: 'Bodega gratis 6 primeros meses x contrato 12 meses', icon: '📦',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Segundo estacionamiento gratis x 12 meses', icon: '🚗',
-    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'SI', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'SI', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: '3 meses estacionamiento gratis x contrato 12 meses', icon: '🅿️',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'SI', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'NO', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
+  { name: '6 meses estacionamiento gratis x contrato 12 meses', icon: '🅿️',
+    values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'NO', BOLDO: 'NO', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Empresas: 2 meses arriendo gratis dividido en 3 (con convenio)', icon: '🏢',
     values: { SOHO: 'NO', PARK: 'NO', CENTRAL: 'SI', BOLDO: 'EVAL', SPOT: 'NO', HOLLEY: 'NO', BELLET: 'NO', IMU: 'NO', BROOKLYN: 'SI', NATIVO: 'NO', RESIDENCE: 'NO', URBANA: 'NO', COLLECTIVE: 'NO' } },
   { name: 'Gastos comunes 50% descuento', icon: '🧾',
@@ -594,9 +596,10 @@ const projectDisplayNames = {
   URBANA: 'BLEND'
 };
 
-// Notas especiales por proyecto
+// Notas especiales por proyecto (se muestran en la sección de Promociones)
 const projectNotes = {
-  BROOKLYN: '⚠️ Las promociones no son acumulativas.'
+  BROOKLYN: '🏠 <strong>Mes gratis</strong> y <strong>6 meses estacionamiento gratis</strong> aplican <strong>SOLO a unidades de 2 dormitorios</strong>. Bodega gratis 6 meses aplica a todas las tipologías.',
+  NATIVO: '🏢 <strong>Medio mes gratis</strong> aplica <strong>SOLO a unidades de la torre Sur</strong>. No aplica a torre Norte.'
 };
 
 let currentProject = 'SOHO';
@@ -799,7 +802,18 @@ function renderDetail() {
           ⚠️ Las promociones <strong>no son acumulables</strong> entre sí.
         </div>
       `;
-      
+
+      // Nota específica del proyecto (restricciones por tipología, torre, etc.)
+      if (projectNotes[currentProject]) {
+        html += `
+          <div style="background:linear-gradient(90deg, rgba(145,204,208,0.15), rgba(145,204,208,0.05));
+                      border-left:3px solid var(--lar-accent-light); padding:10px 14px; border-radius:8px;
+                      margin-bottom:14px; font-size:0.85rem; color:#cbeef0">
+            ${projectNotes[currentProject]}
+          </div>
+        `;
+      }
+
       html += '<div class="promo-grid">';
       projectPromos.forEach(promo => {
         const status = promo.values[currentProject];
