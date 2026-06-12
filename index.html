@@ -427,13 +427,13 @@ const requirements = {
       COLLECTIVE: '—'
     } },
     { label: 'Certificado Antecedentes', values: { all: 'SI', COLLECTIVE: 'Sin antecedentes' } },
-    { label: 'Informe Dicom (Infocheck)', values: { all: 'Equifax Platinum 360 calificación 999', COLLECTIVE: 'Equifax Platinum 360 Calificación 999' } },
+    { label: 'Informe Infocheck (obligatorio)', values: { all: 'Obligatorio para titular, avales y residentes (Equifax Platinum 360, calificación 999)', COLLECTIVE: 'Obligatorio para titular, avales y residentes (Equifax Platinum 360, calificación 999)' }, note: 'Reemplaza al antiguo informe Dicom. Exigible a titular, todos los avales y todos los residentes.' },
     { label: 'Renta requerida titular (Dep./Indep.)', values: {
       SOHO: '3 rentas líquidas, con Aval', PARK: '3 rentas líquidas, con Aval',
       CENTRAL: '3 rentas líquidas, con Aval', BOLDO: '3 rentas líquidas, con Aval',
       SPOT: '3 rentas líquidas, con Aval', HOLLEY: '3 rentas líquidas, con Aval',
       BELLET: '3 rentas líquidas, con Aval', IMU: '3 rentas líquidas, con Aval',
-      BROOKLYN: '3 rentas líquidas, con Aval', NATIVO: '3 rentas líquidas, con Aval',
+      BROOKLYN: '3 rentas líquidas, con Aval', NATIVO: '2,5 rentas líquidas, sin Aval',
       RESIDENCE: '3 rentas líquidas, con Aval', URBANA: '3 rentas líquidas, con Aval',
       COLLECTIVE: '2,5 x renta del depto'
     } },
@@ -445,7 +445,7 @@ const requirements = {
       BELLET: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
       IMU: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
       BOLDO: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
-      NATIVO: '2,5 rentas líquidas (sin complemento), Con Aval (medida temporal)',
+      NATIVO: '2,5 rentas líquidas (sin complemento), Sin Aval',
       URBANA: '2,5 rentas líquidas (sin complemento), Sin Aval (medida temporal)'
     } },
     { label: 'Complemento Renta', values: {
@@ -499,8 +499,8 @@ const requirements = {
       COLLECTIVE: '4 x renta del depto (sin complemento de renta)'
     } },
     { label: 'Acreditación Bancaria', values: { all: 'Cuenta Bancaria y RUT de la empresa', COLLECTIVE: 'Certificado cuenta bancaria y RUT empresa actualizado' } },
-    { label: 'DICOM Empresa', values: { all: '—', COLLECTIVE: 'Equifax empresa Calificación 999' } },
-    { label: 'DICOM Representante Legal', values: { all: '—', COLLECTIVE: 'Equifax R.L. Calificación 999' } }
+    { label: 'Infocheck Empresa', values: { all: '—', COLLECTIVE: 'Equifax empresa Calificación 999' } },
+    { label: 'Infocheck Representante Legal', values: { all: '—', COLLECTIVE: 'Equifax R.L. Calificación 999' } }
   ],
   aval: [
     { label: 'Aval', values: { all: 'SI (Dependiente, Independiente, Jurídica). Excepciones por Canal de Consulta.', COLLECTIVE: 'Requerido — Exime sobre 5x renta depto / 1 garantía' } },
@@ -541,7 +541,7 @@ const collectiveProfiles = {
       { label: 'Carpeta tributaria', value: 'N/A' },
       { label: 'Contrato o certificado de trabajo', value: 'SI' },
       { label: 'Certificado AFP', value: 'Últimos 12 meses' },
-      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Infocheck Equifax Platinum 360', value: 'Calificación 999' },
       { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
       { label: 'Garantía (con aval)', value: '1 x renta depto' },
       { label: 'Garantía (sin aval)', value: '2 x renta depto' },
@@ -559,7 +559,7 @@ const collectiveProfiles = {
       { label: 'Carpeta tributaria', value: 'Último año y formulario 29' },
       { label: 'Contrato o certificado de trabajo', value: 'N/A' },
       { label: 'Certificado AFP', value: 'N/A' },
-      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Infocheck Equifax Platinum 360', value: 'Calificación 999' },
       { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
       { label: 'Garantía (con aval)', value: '1 x renta depto' },
       { label: 'Garantía (sin aval)', value: '2 x renta depto' },
@@ -576,8 +576,8 @@ const collectiveProfiles = {
       { label: 'Carpeta tributaria electrónica y formulario 29', value: 'Último año' },
       { label: 'Acreditación dirección comercial', value: 'Certificado de domicilio' },
       { label: 'Cuenta bancaria y RUT empresa', value: 'Actualizado' },
-      { label: 'DICOM Equifax empresa', value: 'Calificación 999' },
-      { label: 'DICOM Equifax Representante Legal', value: 'Calificación 999' }
+      { label: 'Infocheck Equifax empresa', value: 'Calificación 999' },
+      { label: 'Infocheck Equifax Representante Legal', value: 'Calificación 999' }
     ]
   },
   especial: {
@@ -591,7 +591,7 @@ const collectiveProfiles = {
       { label: 'Liquidaciones (sueldo variable)', value: '6 últimas' },
       { label: 'Contrato o certificado de trabajo', value: 'SI' },
       { label: 'Certificado AFP', value: 'Últimos 12 meses' },
-      { label: 'DICOM Equifax Platinum 360', value: 'Calificación 999' },
+      { label: 'Infocheck Equifax Platinum 360', value: 'Calificación 999' },
       { label: 'Certificado antecedentes', value: 'Sin antecedentes' },
       { label: 'Garantía (con aval)', value: '1 x renta depto' },
       { label: 'Garantía (sin aval)', value: 'N/A' },
